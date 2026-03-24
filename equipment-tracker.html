@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1929">
+<title>裝備記錄系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0b1929;--sur:#101f36;--card:#162843;--brd:#1d3352;
+  --acc:#00c9a7;--acc2:#3b82f6;--ng:#ff5252;--warn:#f59e0b;
+  --txt:#e2eeff;--txt2:#7a9ccc;--rad:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--txt);font-family:'Noto Sans TC',sans-serif;height:100%;overflow:hidden}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(11,25,41,.93);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--brd);
+  display:flex;align-items:center;padding:10px 14px;gap:8px;height:54px}
+.nav-logo{font-size:15px;font-weight:700;flex:1}.nav-logo span{color:var(--acc)}
+.nav-btn{background:var(--card);border:1px solid var(--brd);color:var(--txt);
+  border-radius:9px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;
+  white-space:nowrap;font-family:'Noto Sans TC',sans-serif}
+.nav-btn.acc{background:rgba(0,201,167,.15);border-color:var(--acc);color:var(--acc)}
+
+.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(11,25,41,.96);backdrop-filter:blur(20px);
+  border-top:1px solid var(--brd);display:flex}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:9px 0 max(9px,env(safe-area-inset-bottom));
+  cursor:pointer;font-size:10px;color:var(--txt2);transition:color .18s}
+.tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tab.active{color:var(--acc)}
+
+.page{position:fixed;top:54px;left:0;right:0;bottom:56px;overflow-y:auto;
+  display:none;padding:14px;-webkit-overflow-scrolling:touch}
+.page.active{display:block}
+
+.sc{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
+  padding:14px;margin-bottom:12px}
+.sc-title{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;
+  letter-spacing:1.2px;margin-bottom:13px}
+
+.field{margin-bottom:11px}
+.field label{display:block;font-size:12px;color:var(--txt2);margin-bottom:4px}
+input[type=text],textarea{
+  width:100%;background:var(--card);border:1px solid var(--brd);
+  border-radius:10px;color:var(--txt);font-family:'Noto Sans TC',sans-serif;
+  font-size:15px;padding:11px 13px;outline:none;transition:border-color .18s}
+input[type=text]:focus,textarea:focus{border-color:var(--acc)}
+textarea{resize:none;height:70px}
+
+.status-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.sbtn{padding:13px;border-radius:10px;border:2px solid var(--brd);
+  background:var(--card);color:var(--txt2);font-size:14px;font-weight:700;
+  cursor:pointer;text-align:center;transition:all .18s;font-family:'Noto Sans TC',sans-serif}
+.sbtn.ok.sel{border-color:var(--acc);background:rgba(0,201,167,.12);color:var(--acc)}
+.sbtn.ng.sel{border-color:var(--ng);background:rgba(255,82,82,.12);color:var(--ng)}
+
+.photo-drop{border:2px dashed var(--brd);border-radius:var(--rad);
+  padding:20px;text-align:center;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px}
+.photo-drop svg{width:34px;height:34px;color:var(--txt2)}
+.photo-drop p{color:var(--txt2);font-size:13px}
+#photoInput,#xlsxInput,#jsonInput{display:none}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pt{position:relative;aspect-ratio:1;border-radius:9px;overflow:hidden}
+.pt img{width:100%;height:100%;object-fit:cover;display:block}
+.pt-del{position:absolute;top:4px;right:4px;width:22px;height:22px;
+  background:rgba(0,0,0,.72);border-radius:50%;border:none;
+  color:#fff;font-size:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+
+.btn-p{width:100%;padding:14px;border-radius:var(--rad);border:none;
+  background:linear-gradient(135deg,var(--acc),#00a888);
+  color:#001a12;font-size:15px;font-weight:700;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;margin-top:6px;transition:opacity .15s}
+.btn-p:active{opacity:.78}
+.btn-s{width:100%;padding:12px;border-radius:var(--rad);
+  border:1px solid var(--brd);background:var(--card);
+  color:var(--txt);font-size:14px;font-weight:600;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;margin-top:8px}
+
+.search-wrap{position:relative;margin-bottom:10px}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;color:var(--txt2);pointer-events:none}
+.search-bar{width:100%;background:var(--sur);border:1px solid var(--brd);
+  border-radius:var(--rad);padding:10px 12px 10px 36px;
+  color:var(--txt);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none}
+.search-bar:focus{border-color:var(--acc)}
+.chips{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:5px 13px;border-radius:20px;
+  border:1px solid var(--brd);background:var(--card);
+  color:var(--txt2);font-size:12px;cursor:pointer;transition:all .18s;white-space:nowrap}
+.chip.on{border-color:var(--acc);color:var(--acc);background:rgba(0,201,167,.1)}
+
+/* CARD */
+.eq{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
+  margin-bottom:10px;overflow:hidden;transition:border-color .18s;cursor:pointer}
+.eq:active{border-color:var(--acc2)}
+.eq-top{display:flex;gap:11px;padding:12px 12px 8px;align-items:flex-start}
+.eq-info{flex:1;min-width:0}
+.eq-eid{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--acc);margin-bottom:2px}
+.eq-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eq-sub{font-size:12px;color:var(--txt2);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eq-badge{flex-shrink:0;font-size:11px;font-weight:700;
+  padding:3px 9px;border-radius:20px;margin-top:2px}
+.eq-badge.ok{background:rgba(0,201,167,.15);color:var(--acc);border:1px solid rgba(0,201,167,.3)}
+.eq-badge.ng{background:rgba(255,82,82,.15);color:var(--ng);border:1px solid rgba(255,82,82,.3)}
+
+/* PHOTO STRIP */
+.eq-strip{display:flex;gap:6px;overflow-x:auto;
+  padding:0 12px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.eq-strip::-webkit-scrollbar{display:none}
+.eq-strip img{height:80px;width:80px;object-fit:cover;border-radius:8px;
+  flex-shrink:0;scroll-snap-align:start}
+.eq-more-chip{height:80px;width:64px;border-radius:8px;background:var(--card);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:11px;color:var(--txt2);gap:2px}
+.eq-more-chip span{font-size:18px;font-weight:700;color:var(--txt)}
+
+.eq-footer{display:flex;align-items:center;justify-content:space-between;
+  padding:6px 12px 11px;border-top:1px solid var(--brd)}
+.eq-scope{font-size:11px;color:var(--txt2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:75%}
+.eq-arrow{font-size:12px;color:var(--acc2)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end}
+.overlay.open{display:flex}
+.modal{background:var(--sur);border:1px solid var(--brd);
+  border-radius:22px 22px 0 0;border-bottom:none;
+  width:100%;max-height:92dvh;overflow-y:auto;
+  padding:18px 18px max(18px,env(safe-area-inset-bottom))}
+.modal-handle{width:38px;height:4px;background:var(--brd);border-radius:2px;margin:0 auto 16px}
+
+.m-gallery{display:flex;gap:8px;overflow-x:auto;
+  margin-bottom:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.m-gallery::-webkit-scrollbar{display:none}
+.m-gallery img{height:190px;border-radius:12px;flex-shrink:0;
+  scroll-snap-align:start;object-fit:cover;cursor:zoom-in}
+
+.m-dots{display:flex;justify-content:center;gap:5px;margin-bottom:14px}
+.m-dot{width:6px;height:6px;border-radius:3px;background:var(--brd);transition:all .2s}
+.m-dot.on{background:var(--acc);width:16px}
+
+.mf{display:flex;justify-content:space-between;align-items:flex-start;
+  padding:10px 0;border-bottom:1px solid var(--brd);gap:10px}
+.mf:last-of-type{border-bottom:none}
+.mf .l{color:var(--txt2);font-size:12px;flex-shrink:0;padding-top:1px}
+.mf .v{font-size:14px;font-weight:500;text-align:right;word-break:break-all}
+.m-ts{font-size:11px;color:var(--txt2);text-align:center;margin-top:10px}
+.m-del{width:100%;margin-top:12px;padding:12px;border-radius:var(--rad);
+  border:1px solid var(--ng);background:rgba(255,82,82,.08);
+  color:var(--ng);font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+.m-edit{width:100%;margin-top:8px;padding:12px;border-radius:var(--rad);
+  border:1px solid var(--acc2);background:rgba(59,130,246,.08);
+  color:var(--acc2);font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+
+/* LIGHTBOX */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.93);
+  display:none;align-items:center;justify-content:center}
+.lb.open{display:flex}
+.lb img{max-width:100%;max-height:100%;object-fit:contain}
+.lb-close{position:absolute;top:16px;right:16px;width:38px;height:38px;
+  background:rgba(255,255,255,.14);border-radius:50%;border:none;
+  color:#fff;font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+
+/* STATS */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sk{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
+  padding:16px;text-align:center}
+.sk-num{font-size:30px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.sk-num.ok{color:var(--acc)}.sk-num.ng{color:var(--ng)}.sk-num.w{color:var(--warn)}
+.sk-lbl{font-size:11px;color:var(--txt2);margin-top:3px}
+.brand-row{padding:9px 0;border-bottom:1px solid var(--brd)}
+.brand-row:last-child{border-bottom:none}
+.brand-row-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.brand-bar{height:4px;background:var(--acc);border-radius:2px;transition:width .5s}
+
+/* IO GRID */
+.io-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.io-btn{display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:16px 10px;border-radius:var(--rad);border:1px solid var(--brd);
+  background:var(--card);cursor:pointer;font-family:'Noto Sans TC',sans-serif;
+  font-size:12px;color:var(--txt2);transition:all .18s;text-align:center}
+.io-btn svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.5}
+.io-btn:active{border-color:var(--acc);color:var(--acc);background:rgba(0,201,167,.08)}
+.io-btn.blue:active{border-color:var(--acc2);color:var(--acc2);background:rgba(59,130,246,.08)}
+
+.empty{text-align:center;color:var(--txt2);padding:50px 20px}
+.empty svg{width:44px;height:44px;margin-bottom:10px;opacity:.35;display:block;margin-left:auto;margin-right:auto}
+
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(0);
+  background:var(--acc);color:#001a12;font-weight:700;
+  padding:9px 20px;border-radius:30px;font-size:13px;
+  z-index:500;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.toast.err{background:var(--ng);color:#fff}
+
+.edit-banner{background:rgba(59,130,246,.15);border:1px solid var(--acc2);
+  border-radius:10px;padding:10px 13px;margin-bottom:12px;
+  font-size:13px;color:var(--acc2);display:none;align-items:center;gap:8px}
+.edit-banner.show{display:flex}
+.edit-banner button{margin-left:auto;background:none;border:none;color:var(--acc2);cursor:pointer;font-size:18px}
+
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">⚙️ 裝備<span>記錄</span></div>
+  <button class="nav-btn" onclick="exportExcel()">匯出 Excel</button>
+  <button class="nav-btn acc" onclick="document.getElementById('xlsxInput').click()">匯入 Excel</button>
+</nav>
+
+<input type="file" id="xlsxInput" accept=".xlsx,.xls" onchange="importExcel(this)">
+<input type="file" id="jsonInput" accept=".json" onchange="handleJSONImport(this)">
+<input type="file" id="photoInput" accept="image/*" multiple capture="environment" onchange="handlePhotos(this)">
+
+<!-- ADD PAGE -->
+<div class="page active" id="page-add">
+  <div class="edit-banner" id="editBanner">
+    <span>✏️ 編輯模式</span>
+    <button onclick="clearForm()">✕</button>
+  </div>
+  <div class="sc">
+    <div class="sc-title">📋 基本資料</div>
+    <div class="field"><label>儀具編號 *</label><input type="text" id="f-id" placeholder="EQ-001" autocomplete="off"></div>
+    <div class="field"><label>中文名稱 *</label><input type="text" id="f-name" placeholder="例：液壓壓力錶"></div>
+    <div class="field"><label>廠牌</label><input type="text" id="f-brand" placeholder="例：WIKA"></div>
+    <div class="field"><label>型號</label><input type="text" id="f-model" placeholder="例：EN 837-1"></div>
+    <div class="field"><label>使用範圍</label>
+      <textarea id="f-scope" placeholder="例：液壓測試、燃油系統壓力量測、加壓工具檢定…"></textarea></div>
+    <div class="field"><label>備註</label>
+      <textarea id="f-note" placeholder="選填：校驗日期、保管人、存放位置…"></textarea></div>
+    <div class="field"><label>使用情況 *</label>
+      <div class="status-row">
+        <button class="sbtn ok" id="btn-ok" onclick="setSt('ok')">✅ 正常</button>
+        <button class="sbtn ng" id="btn-ng" onclick="setSt('ng')">⚠️ 故障</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-title">📷 照片</div>
+    <div class="photo-drop" onclick="document.getElementById('photoInput').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      <p>點此拍照 / 選取圖片（可多張）</p>
+    </div>
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
+
+  <button class="btn-p" onclick="saveRec()">💾 儲存記錄</button>
+  <button class="btn-s" onclick="clearForm()">🗑 清除表單</button>
+</div>
+
+<!-- LIST PAGE -->
+<div class="page" id="page-list">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search-bar" id="searchInput" type="text" placeholder="搜尋編號、名稱、廠牌…" oninput="renderList()">
+  </div>
+  <div class="chips">
+    <div class="chip on" data-f="all" onclick="setF(this,'all')">全部</div>
+    <div class="chip" data-f="ok" onclick="setF(this,'ok')">✅ 正常</div>
+    <div class="chip" data-f="ng" onclick="setF(this,'ng')">⚠️ 故障</div>
+  </div>
+  <div id="listCt"></div>
+</div>
+
+<!-- STATS PAGE -->
+<div class="page" id="page-stats">
+  <div class="sg">
+    <div class="sk"><div class="sk-num" id="s-tot">0</div><div class="sk-lbl">總裝備數</div></div>
+    <div class="sk"><div class="sk-num ok" id="s-ok">0</div><div class="sk-lbl">正常</div></div>
+    <div class="sk"><div class="sk-num ng" id="s-ng">0</div><div class="sk-lbl">故障</div></div>
+    <div class="sk"><div class="sk-num w" id="s-ph">0</div><div class="sk-lbl">含照片</div></div>
+  </div>
+  <div class="sc">
+    <div class="sc-title">廠牌分佈</div>
+    <div id="brandCt"></div>
+  </div>
+  <div class="sc">
+    <div class="sc-title">🔄 資料管理</div>
+    <div class="io-grid">
+      <div class="io-btn" onclick="exportExcel()">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+        匯出 Excel
+      </div>
+      <div class="io-btn blue" onclick="document.getElementById('xlsxInput').click()">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><polyline points="15 15 12 12 9 15"/></svg>
+        匯入 Excel
+      </div>
+      <div class="io-btn" onclick="exportJSON()">
+        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        備份 JSON<br><span style="font-size:10px;opacity:.7">（含照片）</span>
+      </div>
+      <div class="io-btn blue" onclick="document.getElementById('jsonInput').click()">
+        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        還原 JSON
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--txt2);line-height:1.8">
+      📌 Excel 匯出：含兩個工作表<br>
+      &nbsp;&nbsp;① 裝備清單（可直接閱讀）<br>
+      &nbsp;&nbsp;② 照片資料（base64，可還原）<br>
+      📌 JSON 備份：完整資料含照片，推薦定期備份
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <div class="tab active" onclick="showTab('add',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    新增
+  </div>
+  <div class="tab" onclick="showTab('list',this);renderList()">
+    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 4"/><polyline points="3 12 4 13 6 10"/><polyline points="3 18 4 19 6 16"/></svg>
+    記錄列表
+  </div>
+  <div class="tab" onclick="showTab('stats',this);renderStats()">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    統計
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-handle"></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lb" onclick="document.getElementById('lb').classList.remove('open')">
+  <button class="lb-close" onclick="event.stopPropagation();document.getElementById('lb').classList.remove('open')">×</button>
+  <img id="lbImg" src="" alt="">
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let DB, fStat='all', photos=[], curSt='', editId=null;
+
+// ── DB ──────────────────────────────────────────────────────
+function openDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open('EqDB2',1);
+  r.onupgradeneeded=e=>e.target.result.createObjectStore('rec',{keyPath:'id',autoIncrement:true});
+  r.onsuccess=e=>{DB=e.target.result;res()};
+  r.onerror=rej;
+})}
+const tx=(m='readonly')=>DB.transaction('rec',m).objectStore('rec');
+const dbAll=()=>new Promise(r=>{tx().getAll().onsuccess=e=>r(e.target.result)});
+const dbAdd=d=>new Promise(r=>{tx('readwrite').add(d).onsuccess=e=>r(e.target.result)});
+const dbPut=d=>new Promise(r=>{tx('readwrite').put(d).onsuccess=r});
+const dbDel=id=>new Promise(r=>{tx('readwrite').delete(id).onsuccess=r});
+
+// ── TAB ─────────────────────────────────────────────────────
+function showTab(n,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── FORM ────────────────────────────────────────────────────
+function setSt(s){
+  curSt=s;
+  document.getElementById('btn-ok').classList.toggle('sel',s==='ok');
+  document.getElementById('btn-ng').classList.toggle('sel',s==='ng');
+}
+function v(id){return document.getElementById(id).value.trim()}
+
+function handlePhotos(inp){
+  Array.from(inp.files).forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1200;let w=img.width,h=img.height;
+        if(w>MAX){h=Math.round(h*MAX/w);w=MAX}
+        if(h>MAX){w=Math.round(w*MAX/h);h=MAX}
+        const c=document.createElement('canvas');
+        c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        photos.push(c.toDataURL('image/jpeg',.75));
+        renderThumbs();
+      };
+      img.src=e.target.result;
+    };
+    r.readAsDataURL(f);
+  });
+  inp.value='';
+}
+function renderThumbs(){
+  document.getElementById('photoGrid').innerHTML=
+    photos.map((b,i)=>`<div class="pt"><img src="${b}"><button class="pt-del" onclick="rmPh(${i})">×</button></div>`).join('');
+}
+function rmPh(i){photos.splice(i,1);renderThumbs()}
+
+async function saveRec(){
+  const eid=v('f-id'),name=v('f-name');
+  if(!eid||!name){toast('請填寫儀具編號和中文名稱','err');return}
+  if(!curSt){toast('請選擇使用情況','err');return}
+  const rec={eqId:eid,name,brand:v('f-brand'),model:v('f-model'),
+    scope:v('f-scope'),note:v('f-note'),
+    status:curSt,photos:[...photos],createdAt:new Date().toISOString()};
+  if(editId){rec.id=editId;await dbPut(rec);toast('✅ 已更新！');editId=null;}
+  else{await dbAdd(rec);toast('✅ 已儲存！')}
+  clearForm();
+}
+
+function clearForm(){
+  ['f-id','f-name','f-brand','f-model','f-scope','f-note'].forEach(i=>document.getElementById(i).value='');
+  curSt='';editId=null;
+  document.getElementById('btn-ok').classList.remove('sel');
+  document.getElementById('btn-ng').classList.remove('sel');
+  document.getElementById('editBanner').classList.remove('show');
+  photos=[];renderThumbs();
+}
+
+// ── LIST ────────────────────────────────────────────────────
+function setF(el,f){
+  fStat=f;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderList();
+}
+
+async function renderList(){
+  const all=await dbAll();
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const items=all.filter(r=>{
+    const hit=[r.eqId,r.name,r.brand,r.model,r.scope].join(' ').toLowerCase().includes(q);
+    return hit&&(fStat==='all'||r.status===fStat);
+  }).reverse();
+
+  const ct=document.getElementById('listCt');
+  if(!items.length){
+    ct.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>無符合記錄</div>`;
+    return;
+  }
+
+  ct.innerHTML=items.map(r=>{
+    // photo strip: up to 5 thumbs + overflow chip
+    let strip='';
+    if(r.photos.length){
+      const show=r.photos.slice(0,5);
+      strip=show.map(p=>`<img src="${p}" onclick="event.stopPropagation();openLb('${p}')">`).join('');
+      if(r.photos.length>5) strip+=`<div class="eq-more-chip"><span>+${r.photos.length-5}</span>更多</div>`;
+      strip=`<div class="eq-strip">${strip}</div>`;
+    }
+    return `<div class="eq" onclick="openDetail(${r.id})">
+      <div class="eq-top">
+        <div class="eq-info">
+          <div class="eq-eid">${escH(r.eqId)}</div>
+          <div class="eq-name">${escH(r.name)}</div>
+          <div class="eq-sub">${escH([r.brand,r.model].filter(Boolean).join(' · ')||'—')}</div>
+        </div>
+        <div class="eq-badge ${r.status}">${r.status==='ok'?'正常':'故障'}</div>
+      </div>
+      ${strip}
+      <div class="eq-footer">
+        <div class="eq-scope">${escH(r.scope||'—')}</div>
+        <div class="eq-arrow">詳情 ›</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function openLb(src){document.getElementById('lbImg').src=src;document.getElementById('lb').classList.add('open')}
+
+// ── DETAIL MODAL ────────────────────────────────────────────
+async function openDetail(id){
+  const all=await dbAll();
+  const r=all.find(x=>x.id===id);
+  if(!r) return;
+  const d=new Date(r.createdAt);
+  const ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+
+  const gallW=`calc(100vw - 60px)`;
+  const gall=r.photos.length
+    ?`<div class="m-gallery" id="mGall">${r.photos.map(p=>`<img src="${p}" style="width:${gallW}" onclick="openLb('${p}')">`).join('')}</div>
+      <div class="m-dots" id="mDots">${r.photos.map((_,i)=>`<div class="m-dot${i===0?' on':''}" id="md${i}"></div>`).join('')}</div>`:'';
+
+  document.getElementById('modalBody').innerHTML=`
+    ${gall}
+    <div class="mf"><span class="l">儀具編號</span><span class="v" style="font-family:'JetBrains Mono';color:var(--acc)">${escH(r.eqId)}</span></div>
+    <div class="mf"><span class="l">中文名稱</span><span class="v">${escH(r.name)}</span></div>
+    <div class="mf"><span class="l">廠牌</span><span class="v">${escH(r.brand||'—')}</span></div>
+    <div class="mf"><span class="l">型號</span><span class="v">${escH(r.model||'—')}</span></div>
+    <div class="mf"><span class="l">使用範圍</span><span class="v" style="white-space:pre-wrap">${escH(r.scope||'—')}</span></div>
+    <div class="mf"><span class="l">備註</span><span class="v" style="white-space:pre-wrap">${escH(r.note||'—')}</span></div>
+    <div class="mf"><span class="l">使用情況</span><span class="v"><span class="eq-badge ${r.status}">${r.status==='ok'?'✅ 正常':'⚠️ 故障'}</span></span></div>
+    <div class="mf"><span class="l">照片數量</span><span class="v">${r.photos.length} 張</span></div>
+    <div class="m-ts">記錄時間：${ds}</div>
+    <button class="m-edit" onclick="startEdit(${r.id})">✏️ 編輯此記錄</button>
+    <button class="m-del" onclick="delRec(${r.id})">🗑 刪除此記錄</button>`;
+
+  document.getElementById('overlay').classList.add('open');
+
+  if(r.photos.length>1){
+    requestAnimationFrame(()=>{
+      const g=document.getElementById('mGall');
+      if(!g) return;
+      g.addEventListener('scroll',()=>{
+        const idx=Math.round(g.scrollLeft/(g.scrollWidth/r.photos.length));
+        document.querySelectorAll('.m-dot').forEach((d,i)=>d.classList.toggle('on',i===idx));
+      },{passive:true});
+    });
+  }
+}
+
+function maybeClose(e){if(e.target===document.getElementById('overlay'))closeModal()}
+function closeModal(){document.getElementById('overlay').classList.remove('open')}
+
+async function startEdit(id){
+  closeModal();
+  const all=await dbAll();
+  const r=all.find(x=>x.id===id);
+  if(!r) return;
+  editId=id;
+  document.getElementById('f-id').value=r.eqId;
+  document.getElementById('f-name').value=r.name;
+  document.getElementById('f-brand').value=r.brand||'';
+  document.getElementById('f-model').value=r.model||'';
+  document.getElementById('f-scope').value=r.scope||'';
+  document.getElementById('f-note').value=r.note||'';
+  setSt(r.status);
+  photos=[...r.photos];
+  renderThumbs();
+  document.getElementById('editBanner').classList.add('show');
+  showTab('add',document.querySelectorAll('.tab')[0]);
+  document.getElementById('page-add').scrollTo(0,0);
+  toast('已載入記錄，修改後儲存即可更新');
+}
+
+async function delRec(id){
+  if(!confirm('確定要刪除這筆記錄？')) return;
+  await dbDel(id);
+  closeModal();
+  toast('已刪除');
+  renderList();
+}
+
+// ── STATS ────────────────────────────────────────────────────
+async function renderStats(){
+  const all=await dbAll();
+  const ok=all.filter(r=>r.status==='ok').length;
+  const ng=all.filter(r=>r.status==='ng').length;
+  document.getElementById('s-tot').textContent=all.length;
+  document.getElementById('s-ok').textContent=ok;
+  document.getElementById('s-ng').textContent=ng;
+  document.getElementById('s-ph').textContent=all.filter(r=>r.photos.length>0).length;
+  const brands={};
+  all.forEach(r=>{const b=r.brand||'未填廠牌';brands[b]=(brands[b]||0)+1});
+  const sorted=Object.entries(brands).sort((a,b)=>b[1]-a[1]);
+  const max=sorted[0]?.[1]||1;
+  document.getElementById('brandCt').innerHTML=sorted.map(([b,n])=>`
+    <div class="brand-row">
+      <div class="brand-row-top"><span>${escH(b)}</span><span style="color:var(--acc);font-family:'JetBrains Mono'">${n}</span></div>
+      <div class="brand-bar" style="width:${(n/max*100).toFixed(0)}%"></div>
+    </div>`).join('')||`<div style="color:var(--txt2);font-size:13px">尚無資料</div>`;
+}
+
+// ── EXCEL EXPORT ─────────────────────────────────────────────
+async function exportExcel(){
+  const all=await dbAll();
+  if(!all.length){toast('沒有資料可匯出','err');return}
+  const wb=XLSX.utils.book_new();
+
+  // Sheet1: readable
+  const hdr=['儀具編號','中文名稱','廠牌','型號','使用範圍','備註','使用情況','照片數量','記錄時間'];
+  const rows=all.map(r=>[
+    r.eqId,r.name,r.brand||'',r.model||'',r.scope||'',r.note||'',
+    r.status==='ok'?'正常':'故障',r.photos.length,
+    new Date(r.createdAt).toLocaleString('zh-TW')
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([hdr,...rows]);
+  ws['!cols']=[{wch:14},{wch:18},{wch:12},{wch:16},{wch:28},{wch:20},{wch:8},{wch:8},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws,'裝備清單');
+
+  // Sheet2: photos base64
+  const phRows=[];
+  all.forEach(r=>r.photos.forEach((p,i)=>phRows.push([r.eqId,i+1,p])));
+  if(phRows.length){
+    const ws2=XLSX.utils.aoa_to_sheet([['儀具編號','照片序號','照片(base64)'],...phRows]);
+    ws2['!cols']=[{wch:14},{wch:8},{wch:80}];
+    XLSX.utils.book_append_sheet(wb,ws2,'照片資料');
+  }
+
+  const fname=`裝備記錄_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  toast(`✅ 已匯出 ${all.length} 筆`);
+}
+
+// ── EXCEL IMPORT ─────────────────────────────────────────────
+async function importExcel(inp){
+  const f=inp.files[0];if(!f) return;
+  const buf=await f.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array'});
+  const photoMap={};
+  if(wb.SheetNames.includes('照片資料')){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets['照片資料'],{header:1}).slice(1);
+    rows.forEach(r=>{
+      const [eid,,b64]=r;
+      if(!eid||!b64) return;
+      if(!photoMap[eid]) photoMap[eid]=[];
+      photoMap[eid].push(b64);
+    });
+  }
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}).slice(1);
+  let n=0;
+  for(const r of rows){
+    const [eqId,name,brand,model,scope,note,stTxt,,ca]=r;
+    if(!eqId||!name) continue;
+    await dbAdd({
+      eqId:String(eqId),name:String(name),
+      brand:brand||'',model:model||'',scope:scope||'',note:note||'',
+      status:stTxt==='故障'?'ng':'ok',
+      photos:photoMap[String(eqId)]||[],
+      createdAt:ca?new Date(String(ca)).toISOString():new Date().toISOString()
+    });
+    n++;
+  }
+  inp.value='';
+  toast(`✅ 已匯入 ${n} 筆記錄`);
+  renderList();
+}
+
+// ── JSON BACKUP ──────────────────────────────────────────────
+async function exportJSON(){
+  const all=await dbAll();
+  const blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`eq_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('已備份 JSON（含照片）');
+}
+async function handleJSONImport(inp){
+  const f=inp.files[0];if(!f) return;
+  try{
+    const arr=JSON.parse(await f.text());
+    let n=0;
+    for(const r of arr){const {id,...rest}=r;await dbAdd(rest);n++}
+    toast(`✅ 已還原 ${n} 筆記錄`);
+    renderList();
+  }catch{toast('JSON 格式錯誤','err')}
+  inp.value='';
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+openDB();
+</script>
+</body>
+</html>
