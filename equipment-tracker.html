@@ -100,7 +100,6 @@ textarea{resize:none;height:70px}
   color:var(--txt2);font-size:12px;cursor:pointer;transition:all .18s;white-space:nowrap}
 .chip.on{border-color:var(--acc);color:var(--acc);background:rgba(0,201,167,.1)}
 
-/* CARD */
 .eq{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
   margin-bottom:10px;overflow:hidden;transition:border-color .18s;cursor:pointer}
 .eq:active{border-color:var(--acc2)}
@@ -115,7 +114,6 @@ textarea{resize:none;height:70px}
 .eq-badge.ok{background:rgba(0,201,167,.15);color:var(--acc);border:1px solid rgba(0,201,167,.3)}
 .eq-badge.ng{background:rgba(255,82,82,.15);color:var(--ng);border:1px solid rgba(255,82,82,.3)}
 
-/* PHOTO STRIP */
 .eq-strip{display:flex;gap:6px;overflow-x:auto;
   padding:0 12px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .eq-strip::-webkit-scrollbar{display:none}
@@ -132,7 +130,6 @@ textarea{resize:none;height:70px}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:75%}
 .eq-arrow{font-size:12px;color:var(--acc2)}
 
-/* MODAL */
 .overlay{position:fixed;inset:0;z-index:200;
   background:rgba(0,0,0,.72);backdrop-filter:blur(6px);
   display:none;align-items:flex-end}
@@ -166,7 +163,6 @@ textarea{resize:none;height:70px}
   border:1px solid var(--acc2);background:rgba(59,130,246,.08);
   color:var(--acc2);font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
 
-/* LIGHTBOX */
 .lb{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.93);
   display:none;align-items:center;justify-content:center}
 .lb.open{display:flex}
@@ -176,7 +172,6 @@ textarea{resize:none;height:70px}
   color:#fff;font-size:22px;cursor:pointer;
   display:flex;align-items:center;justify-content:center}
 
-/* STATS */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .sk{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
   padding:16px;text-align:center}
@@ -188,7 +183,6 @@ textarea{resize:none;height:70px}
 .brand-row-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
 .brand-bar{height:4px;background:var(--acc);border-radius:2px;transition:width .5s}
 
-/* IO GRID */
 .io-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .io-btn{display:flex;flex-direction:column;align-items:center;gap:7px;
   padding:16px 10px;border-radius:var(--rad);border:1px solid var(--brd);
@@ -201,7 +195,7 @@ textarea{resize:none;height:70px}
 .empty{text-align:center;color:var(--txt2);padding:50px 20px}
 .empty svg{width:44px;height:44px;margin-bottom:10px;opacity:.35;display:block;margin-left:auto;margin-right:auto}
 
-.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(0);
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
   background:var(--acc);color:#001a12;font-weight:700;
   padding:9px 20px;border-radius:30px;font-size:13px;
   z-index:500;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
@@ -214,6 +208,12 @@ textarea{resize:none;height:70px}
 .edit-banner.show{display:flex}
 .edit-banner button{margin-left:auto;background:none;border:none;color:var(--acc2);cursor:pointer;font-size:18px}
 
+/* 離線提示 */
+.offline-bar{position:fixed;top:54px;left:0;right:0;z-index:99;
+  background:var(--warn);color:#1a0e00;font-size:12px;font-weight:700;
+  text-align:center;padding:5px;display:none}
+.offline-bar.show{display:block}
+
 ::-webkit-scrollbar{width:0;height:0}
 </style>
 </head>
@@ -224,6 +224,8 @@ textarea{resize:none;height:70px}
   <button class="nav-btn" onclick="exportExcel()">匯出 Excel</button>
   <button class="nav-btn acc" onclick="document.getElementById('xlsxInput').click()">匯入 Excel</button>
 </nav>
+
+<div class="offline-bar" id="offlineBar">📵 離線模式 — 資料仍可正常使用</div>
 
 <input type="file" id="xlsxInput" accept=".xlsx,.xls" onchange="importExcel(this)">
 <input type="file" id="jsonInput" accept=".json" onchange="handleJSONImport(this)">
@@ -308,7 +310,7 @@ textarea{resize:none;height:70px}
       </div>
       <div class="io-btn" onclick="exportJSON()">
         <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-        備份 JSON<br><span style="font-size:10px;opacity:.7">（含照片）</span>
+        備份 JSON
       </div>
       <div class="io-btn blue" onclick="document.getElementById('jsonInput').click()">
         <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
@@ -316,10 +318,9 @@ textarea{resize:none;height:70px}
       </div>
     </div>
     <div style="margin-top:12px;font-size:11px;color:var(--txt2);line-height:1.8">
-      📌 Excel 匯出：含兩個工作表<br>
-      &nbsp;&nbsp;① 裝備清單（可直接閱讀）<br>
-      &nbsp;&nbsp;② 照片資料（base64，可還原）<br>
-      📌 JSON 備份：完整資料含照片，推薦定期備份
+      📌 Excel 匯出含兩個工作表：裝備清單 + 照片資料<br>
+      📌 JSON 備份完整含照片，推薦定期備份<br>
+      📶 離線模式下資料仍可正常新增與查詢
     </div>
   </div>
 </div>
@@ -357,9 +358,26 @@ textarea{resize:none;height:70px}
 <div class="toast" id="toast"></div>
 
 <script>
-let DB, fStat='all', photos=[], curSt='', editId=null;
+// ── Service Worker 註冊 ──────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.log('SW error',e));
+  });
+}
+
+// ── 離線偵測 ────────────────────────────────────────────────
+function updateOnline(){
+  document.getElementById('offlineBar').classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOnline);
+window.addEventListener('offline', updateOnline);
+updateOnline();
 
 // ── DB ──────────────────────────────────────────────────────
+let DB, fStat='all', photos=[], curSt='', editId=null;
+
 function openDB(){return new Promise((res,rej)=>{
   const r=indexedDB.open('EqDB2',1);
   r.onupgradeneeded=e=>e.target.result.createObjectStore('rec',{keyPath:'id',autoIncrement:true});
@@ -457,9 +475,7 @@ async function renderList(){
     ct.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>無符合記錄</div>`;
     return;
   }
-
   ct.innerHTML=items.map(r=>{
-    // photo strip: up to 5 thumbs + overflow chip
     let strip='';
     if(r.photos.length){
       const show=r.photos.slice(0,5);
@@ -495,7 +511,6 @@ async function openDetail(id){
   if(!r) return;
   const d=new Date(r.createdAt);
   const ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-
   const gallW=`calc(100vw - 60px)`;
   const gall=r.photos.length
     ?`<div class="m-gallery" id="mGall">${r.photos.map(p=>`<img src="${p}" style="width:${gallW}" onclick="openLb('${p}')">`).join('')}</div>
@@ -514,9 +529,7 @@ async function openDetail(id){
     <div class="m-ts">記錄時間：${ds}</div>
     <button class="m-edit" onclick="startEdit(${r.id})">✏️ 編輯此記錄</button>
     <button class="m-del" onclick="delRec(${r.id})">🗑 刪除此記錄</button>`;
-
   document.getElementById('overlay').classList.add('open');
-
   if(r.photos.length>1){
     requestAnimationFrame(()=>{
       const g=document.getElementById('mGall');
@@ -581,24 +594,17 @@ async function renderStats(){
     </div>`).join('')||`<div style="color:var(--txt2);font-size:13px">尚無資料</div>`;
 }
 
-// ── EXCEL EXPORT ─────────────────────────────────────────────
+// ── EXCEL ────────────────────────────────────────────────────
 async function exportExcel(){
   const all=await dbAll();
   if(!all.length){toast('沒有資料可匯出','err');return}
   const wb=XLSX.utils.book_new();
-
-  // Sheet1: readable
   const hdr=['儀具編號','中文名稱','廠牌','型號','使用範圍','備註','使用情況','照片數量','記錄時間'];
-  const rows=all.map(r=>[
-    r.eqId,r.name,r.brand||'',r.model||'',r.scope||'',r.note||'',
-    r.status==='ok'?'正常':'故障',r.photos.length,
-    new Date(r.createdAt).toLocaleString('zh-TW')
-  ]);
+  const rows=all.map(r=>[r.eqId,r.name,r.brand||'',r.model||'',r.scope||'',r.note||'',
+    r.status==='ok'?'正常':'故障',r.photos.length,new Date(r.createdAt).toLocaleString('zh-TW')]);
   const ws=XLSX.utils.aoa_to_sheet([hdr,...rows]);
   ws['!cols']=[{wch:14},{wch:18},{wch:12},{wch:16},{wch:28},{wch:20},{wch:8},{wch:8},{wch:20}];
   XLSX.utils.book_append_sheet(wb,ws,'裝備清單');
-
-  // Sheet2: photos base64
   const phRows=[];
   all.forEach(r=>r.photos.forEach((p,i)=>phRows.push([r.eqId,i+1,p])));
   if(phRows.length){
@@ -606,55 +612,42 @@ async function exportExcel(){
     ws2['!cols']=[{wch:14},{wch:8},{wch:80}];
     XLSX.utils.book_append_sheet(wb,ws2,'照片資料');
   }
-
-  const fname=`裝備記錄_${new Date().toISOString().slice(0,10)}.xlsx`;
-  XLSX.writeFile(wb,fname);
+  XLSX.writeFile(wb,`裝備記錄_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast(`✅ 已匯出 ${all.length} 筆`);
 }
 
-// ── EXCEL IMPORT ─────────────────────────────────────────────
 async function importExcel(inp){
   const f=inp.files[0];if(!f) return;
   const buf=await f.arrayBuffer();
   const wb=XLSX.read(buf,{type:'array'});
   const photoMap={};
   if(wb.SheetNames.includes('照片資料')){
-    const rows=XLSX.utils.sheet_to_json(wb.Sheets['照片資料'],{header:1}).slice(1);
-    rows.forEach(r=>{
+    XLSX.utils.sheet_to_json(wb.Sheets['照片資料'],{header:1}).slice(1).forEach(r=>{
       const [eid,,b64]=r;
       if(!eid||!b64) return;
       if(!photoMap[eid]) photoMap[eid]=[];
       photoMap[eid].push(b64);
     });
   }
-  const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}).slice(1);
   let n=0;
-  for(const r of rows){
+  for(const r of XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}).slice(1)){
     const [eqId,name,brand,model,scope,note,stTxt,,ca]=r;
     if(!eqId||!name) continue;
-    await dbAdd({
-      eqId:String(eqId),name:String(name),
-      brand:brand||'',model:model||'',scope:scope||'',note:note||'',
-      status:stTxt==='故障'?'ng':'ok',
+    await dbAdd({eqId:String(eqId),name:String(name),brand:brand||'',model:model||'',
+      scope:scope||'',note:note||'',status:stTxt==='故障'?'ng':'ok',
       photos:photoMap[String(eqId)]||[],
-      createdAt:ca?new Date(String(ca)).toISOString():new Date().toISOString()
-    });
+      createdAt:ca?new Date(String(ca)).toISOString():new Date().toISOString()});
     n++;
   }
-  inp.value='';
-  toast(`✅ 已匯入 ${n} 筆記錄`);
-  renderList();
+  inp.value='';toast(`✅ 已匯入 ${n} 筆記錄`);renderList();
 }
 
-// ── JSON BACKUP ──────────────────────────────────────────────
 async function exportJSON(){
   const all=await dbAll();
-  const blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(all,null,2)],{type:'application/json'}));
   a.download=`eq_backup_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  toast('已備份 JSON（含照片）');
+  a.click();toast('已備份 JSON（含照片）');
 }
 async function handleJSONImport(inp){
   const f=inp.files[0];if(!f) return;
@@ -662,13 +655,11 @@ async function handleJSONImport(inp){
     const arr=JSON.parse(await f.text());
     let n=0;
     for(const r of arr){const {id,...rest}=r;await dbAdd(rest);n++}
-    toast(`✅ 已還原 ${n} 筆記錄`);
-    renderList();
+    toast(`✅ 已還原 ${n} 筆記錄`);renderList();
   }catch{toast('JSON 格式錯誤','err')}
   inp.value='';
 }
 
-// ── TOAST ────────────────────────────────────────────────────
 function toast(msg,type=''){
   const t=document.getElementById('toast');
   t.textContent=msg;t.className='toast show'+(type?' '+type:'');
