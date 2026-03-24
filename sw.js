@@ -1,4 +1,4 @@
-const CACHE = 'eq-v1';
+const CACHE = 'eq-v2';
 const URLS = [
   './equipment-tracker.html',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
