@@ -5,240 +5,316 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0b1929">
+<meta name="theme-color" content="#eef2f7">
 <title>裝備記錄系統</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#0b1929;--sur:#101f36;--card:#162843;--brd:#1d3352;
-  --acc:#00c9a7;--acc2:#3b82f6;--ng:#ff5252;--warn:#f59e0b;
-  --txt:#e2eeff;--txt2:#7a9ccc;--rad:14px;
+  --bg:#eef2f7;--sur:#f7f9fc;--card:#ffffff;--brd:#d0dae8;
+  --acc:#2563eb;--acc2:#64748b;--ng:#dc2626;--warn:#d97706;--purple:#7c3aed;
+  --expire:#ea580c;
+  --txt:#1e293b;--txt2:#64748b;--rad:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);color:var(--txt);font-family:'Noto Sans TC',sans-serif;height:100%;overflow:hidden}
 
 nav{position:fixed;top:0;left:0;right:0;z-index:100;
-  background:rgba(11,25,41,.93);backdrop-filter:blur(20px);
+  background:rgba(247,249,252,.96);backdrop-filter:blur(20px);
   border-bottom:1px solid var(--brd);
-  display:flex;align-items:center;padding:10px 14px;gap:8px;height:54px}
-.nav-logo{font-size:15px;font-weight:700;flex:1}.nav-logo span{color:var(--acc)}
-.nav-btn{background:var(--card);border:1px solid var(--brd);color:var(--txt);
-  border-radius:9px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;padding:0 14px;height:52px;gap:8px}
+.nav-logo{font-size:15px;font-weight:700;flex:1;color:var(--txt)}.nav-logo span{color:var(--acc)}
+.nav-btn{background:var(--card);border:1px solid var(--brd);color:var(--txt2);
+  border-radius:9px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;
   white-space:nowrap;font-family:'Noto Sans TC',sans-serif}
-.nav-btn.acc{background:rgba(0,201,167,.15);border-color:var(--acc);color:var(--acc)}
+.nav-btn.acc{background:rgba(37,99,235,.1);border-color:var(--acc);color:var(--acc)}
 
 .tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;
-  background:rgba(11,25,41,.96);backdrop-filter:blur(20px);
+  background:rgba(247,249,252,.97);backdrop-filter:blur(20px);
   border-top:1px solid var(--brd);display:flex}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:9px 0 max(9px,env(safe-area-inset-bottom));
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 0 max(14px,env(safe-area-inset-bottom));
   cursor:pointer;font-size:10px;color:var(--txt2);transition:color .18s}
 .tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
 .tab.active{color:var(--acc)}
 
-.page{position:fixed;top:54px;left:0;right:0;bottom:56px;overflow-y:auto;
-  display:none;padding:14px;-webkit-overflow-scrolling:touch}
+.page{position:fixed;top:52px;left:0;right:0;
+  bottom:calc(54px + env(safe-area-inset-bottom));
+  overflow-y:auto;display:none;padding:14px;-webkit-overflow-scrolling:touch}
 .page.active{display:block}
 
+.sub-tabs{display:flex;background:var(--card);border:1px solid var(--brd);
+  border-radius:var(--rad);margin-bottom:12px;overflow:hidden}
+.sub-tab{flex:1;padding:11px;text-align:center;font-size:13px;font-weight:700;
+  color:var(--txt2);cursor:pointer;transition:all .18s}
+.sub-tab.active{background:rgba(37,99,235,.08);color:var(--acc)}
+
 .sc{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
-  padding:14px;margin-bottom:12px}
+  padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(100,120,160,.06)}
 .sc-title{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;
   letter-spacing:1.2px;margin-bottom:13px}
 
 .field{margin-bottom:11px}
-.field label{display:block;font-size:12px;color:var(--txt2);margin-bottom:4px}
+.field label{display:block;font-size:12px;color:var(--txt2);margin-bottom:4px;font-weight:500}
 .field-hint{font-size:11px;color:var(--txt2);opacity:.7;margin-top:3px}
-input[type=text],textarea{
+input[type=text],input[type=number],textarea{
   width:100%;background:var(--card);border:1px solid var(--brd);
   border-radius:10px;color:var(--txt);font-family:'Noto Sans TC',sans-serif;
   font-size:15px;padding:11px 13px;outline:none;transition:border-color .18s}
-input[type=text]:focus,textarea:focus{border-color:var(--acc)}
-textarea{resize:none;height:70px}
+input[type=text]:focus,input[type=number]:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+textarea{resize:none;height:68px}
+.range-row{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:6px}
+.range-row input{text-align:center}
+.range-sep{font-size:13px;color:var(--txt2);white-space:nowrap}
 
-/* 系統別選擇器 */
+/* location / system grid */
+.loc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.loc-btn{padding:10px 4px;border-radius:9px;border:1.5px solid var(--brd);
+  background:var(--card);color:var(--txt2);font-size:12px;font-weight:600;
+  cursor:pointer;text-align:center;transition:all .18s;font-family:'Noto Sans TC',sans-serif;
+  box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.loc-btn.sel{border-color:var(--acc);background:rgba(37,99,235,.1);color:var(--acc)}
+.loc-btn.other-btn{border-style:dashed;color:var(--txt2)}
+.loc-btn.other-btn.sel{border-color:var(--purple);background:rgba(124,58,237,.1);color:var(--purple)}
+
+.med-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.med-btn{padding:9px 4px;border-radius:9px;border:1.5px solid var(--brd);
+  background:var(--card);color:var(--txt2);font-size:12px;font-weight:600;
+  cursor:pointer;text-align:center;transition:all .18s;font-family:'Noto Sans TC',sans-serif;
+  box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.med-btn.sel{border-color:#7c3aed;background:rgba(124,58,237,.1);color:#7c3aed}
+
+input[type=date]{
+  width:100%;background:var(--card);border:1px solid var(--brd);
+  border-radius:10px;color:var(--txt);font-family:'Noto Sans TC',sans-serif;
+  font-size:15px;padding:11px 13px;outline:none;transition:border-color .18s;
+  color-scheme:light}
+input[type=date]:focus{border-color:var(--acc)}
+
 .sys-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
 .sys-btn{padding:9px 4px;border-radius:9px;border:1.5px solid var(--brd);
   background:var(--card);color:var(--txt2);font-size:12px;font-weight:600;
   cursor:pointer;text-align:center;transition:all .18s;font-family:'Noto Sans TC',sans-serif;
-  line-height:1.3}
-.sys-btn.sel{border-color:var(--acc2);background:rgba(59,130,246,.15);color:var(--acc2)}
+  line-height:1.3;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.sys-btn.sel{border-color:#0891b2;background:rgba(8,145,178,.1);color:#0891b2}
+.sys-btn.other-btn{border-style:dashed}
+.sys-btn.other-btn.sel{border-color:var(--purple);background:rgba(124,58,237,.1);color:var(--purple)}
 
-.status-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.sbtn{padding:13px;border-radius:10px;border:2px solid var(--brd);
-  background:var(--card);color:var(--txt2);font-size:14px;font-weight:700;
-  cursor:pointer;text-align:center;transition:all .18s;font-family:'Noto Sans TC',sans-serif}
-.sbtn.ok.sel{border-color:var(--acc);background:rgba(0,201,167,.12);color:var(--acc)}
-.sbtn.ng.sel{border-color:var(--ng);background:rgba(255,82,82,.12);color:var(--ng)}
+/* other input popup */
+.other-popup{display:none;margin-top:7px;position:relative}
+.other-popup.open{display:flex;gap:6px}
+.other-popup input{flex:1;font-size:14px;padding:9px 12px;border-radius:9px}
+.other-popup .ok-btn{padding:9px 14px;border-radius:9px;border:none;
+  background:var(--acc);color:#fff;font-size:13px;font-weight:700;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;white-space:nowrap}
+
+.status-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sbtn{padding:11px 6px;border-radius:10px;border:2px solid var(--brd);
+  background:var(--card);color:var(--txt2);font-size:12px;font-weight:700;
+  cursor:pointer;text-align:center;transition:all .18s;font-family:'Noto Sans TC',sans-serif;
+  box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.sbtn.ok.sel{border-color:#16a34a;background:rgba(22,163,74,.1);color:#16a34a}
+.sbtn.ng.sel{border-color:var(--ng);background:rgba(220,38,38,.1);color:var(--ng)}
+
+.eq-status-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 
 .photo-drop{border:2px dashed var(--brd);border-radius:var(--rad);
-  padding:20px;text-align:center;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;gap:6px}
-.photo-drop svg{width:34px;height:34px;color:var(--txt2)}
+  padding:18px;text-align:center;cursor:pointer;background:rgba(37,99,235,.02);
+  display:flex;flex-direction:column;align-items:center;gap:5px}
+.photo-drop svg{width:32px;height:32px;color:var(--txt2)}
 .photo-drop p{color:var(--txt2);font-size:13px}
-#photoInput,#xlsxInput,#jsonInput{display:none}
-.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 .pt{position:relative;aspect-ratio:1;border-radius:9px;overflow:hidden}
 .pt img{width:100%;height:100%;object-fit:cover;display:block}
 .pt-del{position:absolute;top:4px;right:4px;width:22px;height:22px;
-  background:rgba(0,0,0,.72);border-radius:50%;border:none;
-  color:#fff;font-size:15px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center}
+  background:rgba(0,0,0,.6);border-radius:50%;border:none;
+  color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
-.btn-p{width:100%;padding:14px;border-radius:var(--rad);border:none;
-  background:linear-gradient(135deg,var(--acc),#00a888);
-  color:#001a12;font-size:15px;font-weight:700;cursor:pointer;
-  font-family:'Noto Sans TC',sans-serif;margin-top:6px;transition:opacity .15s}
-.btn-p:active{opacity:.78}
-.btn-s{width:100%;padding:12px;border-radius:var(--rad);
+.asset-search-wrap{position:relative}
+.asset-dropdown{position:absolute;top:100%;left:0;right:0;z-index:50;
+  background:var(--card);border:1px solid var(--brd);border-radius:10px;
+  margin-top:4px;max-height:180px;overflow-y:auto;display:none;
+  box-shadow:0 4px 16px rgba(37,99,235,.1)}
+.asset-dropdown.open{display:block}
+.asset-option{padding:10px 13px;cursor:pointer;border-bottom:1px solid var(--brd);font-size:13px}
+.asset-option:last-child{border-bottom:none}
+.asset-option:active{background:rgba(37,99,235,.06)}
+.asset-option .opt-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--acc);margin-bottom:2px}
+.selected-asset{display:flex;align-items:center;gap:8px;
+  background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.25);
+  border-radius:10px;padding:10px 13px;margin-top:6px}
+.selected-asset .sa-id{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--acc)}
+.selected-asset .sa-name{font-size:13px;flex:1;color:var(--txt)}
+.selected-asset .sa-clear{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:16px;padding:0}
+
+.btn-p{width:100%;padding:13px;border-radius:var(--rad);border:none;
+  background:var(--acc);
+  color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;margin-top:6px;transition:opacity .15s;
+  box-shadow:0 2px 8px rgba(37,99,235,.25)}
+.btn-p:active{opacity:.82}
+.btn-s{width:100%;padding:11px;border-radius:var(--rad);
   border:1px solid var(--brd);background:var(--card);
-  color:var(--txt);font-size:14px;font-weight:600;cursor:pointer;
+  color:var(--txt2);font-size:14px;font-weight:600;cursor:pointer;
   font-family:'Noto Sans TC',sans-serif;margin-top:8px}
 
-/* LIST */
 .search-wrap{position:relative;margin-bottom:10px}
 .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);
   width:16px;height:16px;color:var(--txt2);pointer-events:none}
-.search-bar{width:100%;background:var(--sur);border:1px solid var(--brd);
+.search-bar{width:100%;background:var(--card);border:1px solid var(--brd);
   border-radius:var(--rad);padding:10px 12px 10px 36px;
-  color:var(--txt);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none}
+  color:var(--txt);font-family:'Noto Sans TC',sans-serif;font-size:14px;outline:none;
+  box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .search-bar:focus{border-color:var(--acc)}
 
 .filter-group{margin-bottom:10px}
-.filter-label{font-size:10px;color:var(--txt2);letter-spacing:.8px;text-transform:uppercase;
-  margin-bottom:5px;font-weight:700}
+.filter-label{font-size:10px;color:var(--txt2);letter-spacing:.8px;
+  text-transform:uppercase;margin-bottom:5px;font-weight:700}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex-shrink:0;padding:5px 11px;border-radius:20px;
   border:1px solid var(--brd);background:var(--card);
   color:var(--txt2);font-size:12px;cursor:pointer;transition:all .18s;white-space:nowrap}
-.chip.on{border-color:var(--acc);color:var(--acc);background:rgba(0,201,167,.1)}
-.chip.on.sys{border-color:var(--acc2);color:var(--acc2);background:rgba(59,130,246,.1)}
+.chip.on{border-color:var(--acc);color:var(--acc);background:rgba(37,99,235,.1)}
+.chip.on.sys{border-color:#0891b2;color:#0891b2;background:rgba(8,145,178,.1)}
+.chip.on.loc{border-color:var(--acc);color:var(--acc);background:rgba(37,99,235,.1)}
+.chip.warn-chip{border-color:var(--ng);color:var(--ng)}
+.chip.on.warn-chip{background:rgba(220,38,38,.08)}
 
-/* CARD */
-.eq{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
-  margin-bottom:10px;overflow:hidden;transition:border-color .18s;cursor:pointer}
-.eq:active{border-color:var(--acc2)}
-.eq-top{display:flex;gap:11px;padding:12px 12px 8px;align-items:flex-start}
-.eq-info{flex:1;min-width:0}
-.eq-asset{font-size:11px;color:var(--txt2);margin-bottom:2px}
-.eq-asset span{font-family:'JetBrains Mono',monospace;color:var(--warn)}
-.eq-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.eq-iids{font-size:11px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.eq-iids span{font-family:'JetBrains Mono',monospace;color:var(--acc);font-size:11px}
-.eq-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
-.eq-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
-.eq-badge.ok{background:rgba(0,201,167,.15);color:var(--acc);border:1px solid rgba(0,201,167,.3)}
-.eq-badge.ng{background:rgba(255,82,82,.15);color:var(--ng);border:1px solid rgba(255,82,82,.3)}
-.eq-sys{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;
-  background:rgba(59,130,246,.15);color:var(--acc2);border:1px solid rgba(59,130,246,.3)}
+/* CARDS */
+.eq-card,.ins-card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
+  margin-bottom:10px;overflow:hidden;cursor:pointer;transition:all .18s;
+  box-shadow:0 1px 3px rgba(100,120,160,.06)}
+.eq-card:active{border-color:var(--acc);box-shadow:0 2px 8px rgba(37,99,235,.12)}
+.ins-card:active{border-color:var(--acc);box-shadow:0 2px 8px rgba(37,99,235,.12)}
+.card-top{display:flex;gap:10px;padding:12px 12px 8px;align-items:flex-start}
+.card-info{flex:1;min-width:0}
+.asset-id-tag{font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:#fff;background:var(--warn);padding:2px 7px;border-radius:5px;
+  display:inline-block;margin-bottom:4px}
+.instr-id-tag{font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:#fff;background:var(--acc);padding:2px 7px;border-radius:5px;
+  display:inline-block;margin-bottom:4px}
+.card-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.card-sub{font-size:12px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.badge.ok{background:rgba(22,163,74,.12);color:#16a34a;border:1px solid rgba(22,163,74,.3)}
+.badge.ng{background:rgba(220,38,38,.12);color:var(--ng);border:1px solid rgba(220,38,38,.25)}
+.badge.sys{background:rgba(8,145,178,.1);color:#0891b2;border:1px solid rgba(8,145,178,.2);font-size:10px}
+.badge.loc{background:rgba(37,99,235,.1);color:var(--acc);border:1px solid rgba(37,99,235,.2);font-size:10px}
+.badge.valid{background:rgba(22,163,74,.1);color:#16a34a;border:1px solid rgba(22,163,74,.25)}
+.badge.expire{background:rgba(220,38,38,.12);color:var(--ng);border:1px solid rgba(220,38,38,.25)}
+.badge.soon{background:rgba(217,119,6,.12);color:var(--warn);border:1px solid rgba(217,119,6,.3)}
+
+.instr-mini{background:rgba(37,99,235,.05);border-radius:9px;padding:7px 10px;margin:0 12px 11px;border:1px solid rgba(37,99,235,.1)}
+.instr-mini-label{font-size:10px;color:var(--txt2);margin-bottom:5px}
+.instr-tags{display:flex;flex-wrap:wrap;gap:5px}
+.instr-tag{font-family:'JetBrains Mono',monospace;font-size:10px;
+  padding:2px 7px;border-radius:5px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--acc)}
+
+.ins-linked{display:flex;align-items:center;gap:6px;
+  background:rgba(37,99,235,.05);border-radius:9px;padding:6px 10px;margin:0 12px 10px;
+  border:1px solid rgba(37,99,235,.1)}
+.ins-linked-label{font-size:10px;color:var(--txt2)}
+.ins-linked-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--warn)}
+.ins-linked-name{font-size:11px;color:var(--txt);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ins-no-link{font-size:10px;color:var(--txt2);padding:0 12px 10px;font-style:italic}
 
 .eq-strip{display:flex;gap:6px;overflow-x:auto;
   padding:0 12px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .eq-strip::-webkit-scrollbar{display:none}
-.eq-strip img{height:80px;width:80px;object-fit:cover;border-radius:8px;
-  flex-shrink:0;scroll-snap-align:start}
-.eq-more-chip{height:80px;width:64px;border-radius:8px;background:var(--card);
+.eq-strip img{height:76px;width:76px;object-fit:cover;border-radius:8px;flex-shrink:0;scroll-snap-align:start}
+.eq-more-chip{height:76px;width:58px;border-radius:8px;background:rgba(37,99,235,.08);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   flex-shrink:0;font-size:11px;color:var(--txt2);gap:2px}
-.eq-more-chip span{font-size:18px;font-weight:700;color:var(--txt)}
+.eq-more-chip span{font-size:17px;font-weight:700;color:var(--acc)}
 
-.eq-footer{display:flex;align-items:center;justify-content:space-between;
+.card-footer{display:flex;align-items:center;justify-content:space-between;
   padding:6px 12px 11px;border-top:1px solid var(--brd)}
-.eq-scope{font-size:11px;color:var(--txt2);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:75%}
-.eq-arrow{font-size:12px;color:var(--acc2)}
+.card-foot-txt{font-size:11px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:75%}
+.card-arrow{font-size:12px;color:var(--acc)}
 
-/* MODAL */
 .overlay{position:fixed;inset:0;z-index:200;
-  background:rgba(0,0,0,.72);backdrop-filter:blur(6px);
-  display:none;align-items:flex-end}
+  background:rgba(30,41,59,.4);backdrop-filter:blur(6px);display:none;align-items:flex-end}
 .overlay.open{display:flex}
 .modal{background:var(--sur);border:1px solid var(--brd);
   border-radius:22px 22px 0 0;border-bottom:none;
   width:100%;max-height:92dvh;overflow-y:auto;
-  padding:18px 18px max(18px,env(safe-area-inset-bottom))}
+  padding:18px 18px max(18px,env(safe-area-inset-bottom));
+  box-shadow:0 -4px 24px rgba(37,99,235,.08)}
 .modal-handle{width:38px;height:4px;background:var(--brd);border-radius:2px;margin:0 auto 16px}
-
-.m-gallery{display:flex;gap:8px;overflow-x:auto;
-  margin-bottom:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.m-gallery{display:flex;gap:8px;overflow-x:auto;margin-bottom:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .m-gallery::-webkit-scrollbar{display:none}
-.m-gallery img{height:190px;border-radius:12px;flex-shrink:0;
-  scroll-snap-align:start;object-fit:cover;cursor:zoom-in}
+.m-gallery img{height:190px;border-radius:12px;flex-shrink:0;scroll-snap-align:start;object-fit:cover;cursor:zoom-in}
 .m-dots{display:flex;justify-content:center;gap:5px;margin-bottom:14px}
 .m-dot{width:6px;height:6px;border-radius:3px;background:var(--brd);transition:all .2s}
 .m-dot.on{background:var(--acc);width:16px}
-
-/* iid tags in modal */
-.iid-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}
-.iid-tag{font-family:'JetBrains Mono',monospace;font-size:11px;
-  background:rgba(0,201,167,.1);color:var(--acc);border:1px solid rgba(0,201,167,.25);
-  border-radius:6px;padding:2px 7px}
-
 .mf{display:flex;justify-content:space-between;align-items:flex-start;
   padding:10px 0;border-bottom:1px solid var(--brd);gap:10px}
 .mf:last-of-type{border-bottom:none}
 .mf .l{color:var(--txt2);font-size:12px;flex-shrink:0;padding-top:2px}
-.mf .v{font-size:14px;font-weight:500;text-align:right;word-break:break-all}
+.mf .v{font-size:14px;font-weight:500;text-align:right;word-break:break-all;color:var(--txt)}
 .m-ts{font-size:11px;color:var(--txt2);text-align:center;margin-top:10px}
 .m-del{width:100%;margin-top:12px;padding:12px;border-radius:var(--rad);
-  border:1px solid var(--ng);background:rgba(255,82,82,.08);
+  border:1px solid rgba(220,38,38,.4);background:rgba(220,38,38,.06);
   color:var(--ng);font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
 .m-edit{width:100%;margin-top:8px;padding:12px;border-radius:var(--rad);
-  border:1px solid var(--acc2);background:rgba(59,130,246,.08);
-  color:var(--acc2);font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+  border:1px solid rgba(37,99,235,.4);background:rgba(37,99,235,.06);
+  color:var(--acc);font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+.m-instr-item{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;border-bottom:1px solid var(--brd);font-size:13px}
+.m-instr-item:last-child{border-bottom:none}
 
-.lb{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.93);
+.lb{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.88);
   display:none;align-items:center;justify-content:center}
 .lb.open{display:flex}
 .lb img{max-width:100%;max-height:100%;object-fit:contain}
 .lb-close{position:absolute;top:16px;right:16px;width:38px;height:38px;
-  background:rgba(255,255,255,.14);border-radius:50%;border:none;
-  color:#fff;font-size:22px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center}
+  background:rgba(255,255,255,.18);border-radius:50%;border:none;
+  color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
-/* STATS */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.sk{background:var(--sur);border:1px solid var(--brd);border-radius:var(--rad);
-  padding:16px;text-align:center}
-.sk-num{font-size:30px;font-weight:700;font-family:'JetBrains Mono',monospace}
-.sk-num.ok{color:var(--acc)}.sk-num.ng{color:var(--ng)}.sk-num.w{color:var(--warn)}
+.sk{background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:14px;text-align:center;
+  box-shadow:0 1px 3px rgba(100,120,160,.06)}
+.sk-num{font-size:26px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.sk-num.ok{color:#16a34a}.sk-num.ng{color:var(--ng)}.sk-num.w{color:var(--warn)}.sk-num.p{color:var(--purple)}.sk-num.e{color:var(--expire)}
 .sk-lbl{font-size:11px;color:var(--txt2);margin-top:3px}
-.brand-row{padding:9px 0;border-bottom:1px solid var(--brd)}
-.brand-row:last-child{border-bottom:none}
-.brand-row-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
-.brand-bar{height:4px;background:var(--acc);border-radius:2px;transition:width .5s}
+.bar-row{padding:9px 0;border-bottom:1px solid var(--brd)}
+.bar-row:last-child{border-bottom:none}
+.bar-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.bar-fill{height:4px;border-radius:2px;transition:width .5s}
 
 .io-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
-.io-btn{display:flex;flex-direction:column;align-items:center;gap:7px;
-  padding:16px 10px;border-radius:var(--rad);border:1px solid var(--brd);
+.io-btn{display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:14px 10px;border-radius:var(--rad);border:1px solid var(--brd);
   background:var(--card);cursor:pointer;font-family:'Noto Sans TC',sans-serif;
-  font-size:12px;color:var(--txt2);transition:all .18s;text-align:center}
-.io-btn svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.5}
-.io-btn:active{border-color:var(--acc);color:var(--acc);background:rgba(0,201,167,.08)}
-.io-btn.blue:active{border-color:var(--acc2);color:var(--acc2);background:rgba(59,130,246,.08)}
+  font-size:12px;color:var(--txt2);transition:all .18s;text-align:center;
+  box-shadow:0 1px 3px rgba(100,120,160,.06)}
+.io-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.5}
+.io-btn:active{border-color:var(--acc);color:var(--acc);background:rgba(37,99,235,.08)}
+.io-btn.blue:active{border-color:#0891b2;color:#0891b2;background:rgba(8,145,178,.08)}
 
 .empty{text-align:center;color:var(--txt2);padding:50px 20px}
-.empty svg{width:44px;height:44px;margin-bottom:10px;opacity:.35;display:block;margin-left:auto;margin-right:auto}
-
-.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
-  background:var(--acc);color:#001a12;font-weight:700;
+.empty svg{width:42px;height:42px;margin:0 auto 10px;opacity:.3;display:block}
+.toast{position:fixed;bottom:74px;left:50%;transform:translateX(-50%);
+  background:var(--acc);color:#fff;font-weight:700;
   padding:9px 20px;border-radius:30px;font-size:13px;
-  z-index:500;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
-.toast.show{opacity:1}
-.toast.err{background:var(--ng);color:#fff}
-
-.edit-banner{background:rgba(59,130,246,.15);border:1px solid var(--acc2);
+  z-index:500;opacity:0;transition:opacity .25s;pointer-events:none;
+  white-space:nowrap;max-width:90vw;text-align:center;
+  box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.toast.show{opacity:1}.toast.err{background:var(--ng);box-shadow:0 4px 12px rgba(220,38,38,.3)}
+.edit-banner{background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.3);
   border-radius:10px;padding:10px 13px;margin-bottom:12px;
-  font-size:13px;color:var(--acc2);display:none;align-items:center;gap:8px}
+  font-size:13px;color:var(--acc);display:none;align-items:center;gap:8px}
 .edit-banner.show{display:flex}
-.edit-banner button{margin-left:auto;background:none;border:none;color:var(--acc2);cursor:pointer;font-size:18px}
-
-.offline-bar{position:fixed;top:54px;left:0;right:0;z-index:99;
-  background:var(--warn);color:#1a0e00;font-size:12px;font-weight:700;
-  text-align:center;padding:5px;display:none}
+.edit-banner button{margin-left:auto;background:none;border:none;color:var(--acc);cursor:pointer;font-size:18px}
+.offline-bar{position:fixed;top:52px;left:0;right:0;z-index:99;
+  background:#fef3c7;color:#92400e;border-bottom:1px solid #fcd34d;
+  font-size:12px;font-weight:700;text-align:center;padding:5px;display:none}
 .offline-bar.show{display:block}
-
+#photoInput,#xlsxInput,#jsonInput{display:none}
 ::-webkit-scrollbar{width:0;height:0}
 </style>
 </head>
@@ -246,243 +322,450 @@ textarea{resize:none;height:70px}
 
 <nav>
   <div class="nav-logo">⚙️ 裝備<span>記錄</span></div>
-  <button class="nav-btn" onclick="exportExcel()">匯出 Excel</button>
-  <button class="nav-btn acc" onclick="document.getElementById('xlsxInput').click()">匯入 Excel</button>
+  <button class="nav-btn" onclick="exportExcel()">匯出</button>
+  <button class="nav-btn acc" onclick="document.getElementById('xlsxInput').click()">匯入</button>
 </nav>
-<div class="offline-bar" id="offlineBar">📵 離線模式 — 資料仍可正常使用</div>
-
+<div class="offline-bar" id="offlineBar">📵 離線模式</div>
 <input type="file" id="xlsxInput" accept=".xlsx,.xls" onchange="importExcel(this)">
 <input type="file" id="jsonInput" accept=".json" onchange="handleJSONImport(this)">
-<input type="file" id="photoInput" accept="image/*" multiple capture="environment" onchange="handlePhotos(this)">
+<input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(this)">
 
-<!-- ADD PAGE -->
-<div class="page active" id="page-add">
-  <div class="edit-banner" id="editBanner"><span>✏️ 編輯模式</span><button onclick="clearForm()">✕</button></div>
-
-  <div class="sc">
-    <div class="sc-title">📋 基本資料</div>
-
-    <div class="field">
-      <label>財產編號 <span style="color:var(--txt2);font-weight:400">（選填）</span></label>
-      <input type="text" id="f-asset" placeholder="例：A1234567" autocomplete="off">
-    </div>
-
-    <div class="field">
-      <label>儀具編號 * <span style="color:var(--txt2);font-weight:400">（多個用逗號分隔）</span></label>
-      <input type="text" id="f-id" placeholder="例：CAL-001, CAL-002" autocomplete="off">
-      <div class="field-hint">💡 單一儀具直接填一個編號即可</div>
-    </div>
-
-    <div class="field">
-      <label>中文名稱 *</label>
-      <input type="text" id="f-name" placeholder="例：液壓壓力錶">
-    </div>
-
-    <div class="field">
-      <label>廠牌</label>
-      <input type="text" id="f-brand" placeholder="例：WIKA">
-    </div>
-
-    <div class="field">
-      <label>型號</label>
-      <input type="text" id="f-model" placeholder="例：EN 837-1">
-    </div>
-
-    <div class="field">
-      <label>系統別 *</label>
-      <div class="sys-grid" id="sysGrid">
-        <button class="sys-btn" data-sys="航電/飛操" onclick="setSys(this)">航電<br>飛操</button>
-        <button class="sys-btn" data-sys="液壓" onclick="setSys(this)">液壓</button>
-        <button class="sys-btn" data-sys="燃油" onclick="setSys(this)">燃油</button>
-        <button class="sys-btn" data-sys="環控/氧氣" onclick="setSys(this)">環控<br>氧氣</button>
-        <button class="sys-btn" data-sys="起落架" onclick="setSys(this)">起落架</button>
-        <button class="sys-btn" data-sys="武器" onclick="setSys(this)">武器</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>使用範圍</label>
-      <textarea id="f-scope" placeholder="例：液壓測試、燃油系統壓力量測…"></textarea>
-    </div>
-
-    <div class="field">
-      <label>備註</label>
-      <textarea id="f-note" placeholder="選填：校驗日期、保管人、存放位置…"></textarea>
-    </div>
-
-    <div class="field">
-      <label>使用情況 *</label>
-      <div class="status-row">
-        <button class="sbtn ok" id="btn-ok" onclick="setSt('ok')">✅ 正常</button>
-        <button class="sbtn ng" id="btn-ng" onclick="setSt('ng')">⚠️ 故障</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="sc">
-    <div class="sc-title">📷 照片</div>
-    <div class="photo-drop" onclick="document.getElementById('photoInput').click()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-      </svg>
-      <p>點此拍照 / 選取圖片（可多張）</p>
-    </div>
-    <div class="photo-grid" id="photoGrid"></div>
-  </div>
-
-  <button class="btn-p" onclick="saveRec()">💾 儲存記錄</button>
-  <button class="btn-s" onclick="clearForm()">🗑 清除表單</button>
-</div>
-
-<!-- LIST PAGE -->
-<div class="page" id="page-list">
+<!-- ═══ 裝備列表 ═══ -->
+<div class="page active" id="page-equip">
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input class="search-bar" id="searchInput" type="text" placeholder="搜尋財產編號、儀具編號、名稱…" oninput="renderList()">
+    <input class="search-bar" id="eq-search" type="text" placeholder="搜尋財產編號、名稱…" oninput="renderEquip()">
   </div>
-
-  <div class="filter-group">
-    <div class="filter-label">使用情況</div>
-    <div class="chips" id="statusChips">
-      <div class="chip on" data-f="all" onclick="setF('status',this,'all')">全部</div>
-      <div class="chip" data-f="ok" onclick="setF('status',this,'ok')">✅ 正常</div>
-      <div class="chip" data-f="ng" onclick="setF('status',this,'ng')">⚠️ 故障</div>
-      <div class="chip" data-f="nophoto" onclick="setF('status',this,'nophoto')" style="border-color:#f59e0b;color:#f59e0b">📷 未補照片</div>
-    </div>
-  </div>
-
   <div class="filter-group">
     <div class="filter-label">系統別</div>
-    <div class="chips" id="sysChips">
-      <div class="chip on sys" data-f="all" onclick="setF('sys',this,'all')">全部</div>
-      <div class="chip sys" data-f="航電/飛操" onclick="setF('sys',this,'航電/飛操')">航電/飛操</div>
-      <div class="chip sys" data-f="液壓" onclick="setF('sys',this,'液壓')">液壓</div>
-      <div class="chip sys" data-f="燃油" onclick="setF('sys',this,'燃油')">燃油</div>
-      <div class="chip sys" data-f="環控/氧氣" onclick="setF('sys',this,'環控/氧氣')">環控/氧氣</div>
-      <div class="chip sys" data-f="起落架" onclick="setF('sys',this,'起落架')">起落架</div>
-      <div class="chip sys" data-f="武器" onclick="setF('sys',this,'武器')">武器</div>
+    <div class="chips" id="eq-sys-chips">
+      <div class="chip on sys" onclick="setEqF('sys',this,'all')">全部</div>
+      <div class="chip sys" onclick="setEqF('sys',this,'航電/飛操')">航電/飛操</div>
+      <div class="chip sys" onclick="setEqF('sys',this,'液壓')">液壓</div>
+      <div class="chip sys" onclick="setEqF('sys',this,'燃油')">燃油</div>
+      <div class="chip sys" onclick="setEqF('sys',this,'環控/氧氣')">環控/氧氣</div>
+      <div class="chip sys" onclick="setEqF('sys',this,'起落架')">起落架</div>
+      <div class="chip sys" onclick="setEqF('sys',this,'武器')">武器</div>
     </div>
   </div>
-
-  <div id="listCt"></div>
+  <div class="filter-group">
+    <div class="filter-label">狀態</div>
+    <div class="chips" id="eq-status-chips">
+      <div class="chip on" onclick="setEqF('status',this,'all')">全部</div>
+      <div class="chip" onclick="setEqF('status',this,'ok')">✅ 正常</div>
+      <div class="chip" onclick="setEqF('status',this,'ng')">⚠️ 故障</div>
+    </div>
+  </div>
+  <div id="equip-list"></div>
 </div>
 
-<!-- STATS PAGE -->
+<!-- ═══ 儀校列表 ═══ -->
+<div class="page" id="page-instr">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search-bar" id="ins-search" type="text" placeholder="搜尋儀校編號、名稱、廠牌…" oninput="renderInstr()">
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">地點</div>
+    <div class="chips" id="ins-loc-chips">
+      <div class="chip on loc" onclick="setInsF('loc',this,'all')">全部</div>
+      <div class="chip loc" onclick="setInsF('loc',this,'17/18')">17/18</div>
+      <div class="chip loc" onclick="setInsF('loc',this,'17棚庫房')">17棚庫房</div>
+      <div class="chip loc" onclick="setInsF('loc',this,'35/36')">35/36</div>
+      <div class="chip loc" onclick="setInsF('loc',this,'37/38')">37/38</div>
+      <div class="chip loc" onclick="setInsF('loc',this,'23')">23</div>
+    </div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">儀器狀態</div>
+    <div class="chips" id="ins-status-chips">
+      <div class="chip on" onclick="setInsF('status',this,'all')">全部</div>
+      <div class="chip" onclick="setInsF('status',this,'ok')">✅ 正常</div>
+      <div class="chip" onclick="setInsF('status',this,'ng')">⚠️ 故障</div>
+      <div class="chip warn-chip" onclick="setInsF('status',this,'nophoto')">📷 未補照片</div>
+    </div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">校驗狀態</div>
+    <div class="chips" id="ins-cal-chips">
+      <div class="chip on" onclick="setInsF('cal',this,'all')">全部</div>
+      <div class="chip" onclick="setInsF('cal',this,'valid')" style="border-color:var(--acc2);color:var(--acc2)">✓ 有效</div>
+      <div class="chip" onclick="setInsF('cal',this,'soon')" style="border-color:var(--warn);color:var(--warn)">⏰ 即將到期</div>
+      <div class="chip" onclick="setInsF('cal',this,'expire')" style="border-color:var(--expire);color:var(--expire)">✗ 已逾期</div>
+      <div class="chip" onclick="setInsF('cal',this,'none')" style="color:var(--txt2)">— 未設定</div>
+    </div>
+  </div>
+  <div id="instr-list"></div>
+</div>
+
+<!-- ═══ 新增 ═══ -->
+<div class="page" id="page-add">
+  <div class="sub-tabs">
+    <div class="sub-tab active" id="sub-equip" onclick="switchAdd('equip')">🔧 新增裝備</div>
+    <div class="sub-tab" id="sub-instr" onclick="switchAdd('instr')">📐 新增儀校</div>
+  </div>
+  <div class="edit-banner" id="editBanner"><span id="editLabel">✏️ 編輯模式</span><button onclick="clearForm()">✕</button></div>
+
+  <!-- 裝備表單 -->
+  <div id="form-equip">
+    <div class="sc">
+      <div class="sc-title">🔧 裝備資料</div>
+      <div class="field"><label>財產編號 <span style="color:var(--txt2);font-weight:400">（選填）</span></label>
+        <input type="text" id="eq-asset" placeholder="例：A1234567" autocomplete="off"></div>
+      <div class="field"><label>裝備名稱 *</label>
+        <input type="text" id="eq-name" placeholder="例：液壓測試台"></div>
+      <div class="field"><label>廠牌</label>
+        <input type="text" id="eq-brand" placeholder="例：Parker"></div>
+      <div class="field"><label>型號</label>
+        <input type="text" id="eq-model" placeholder="例：TE-3000"></div>
+      <div class="field"><label>系統別 *</label>
+        <div class="sys-grid" id="eq-sys-grid">
+          <button class="sys-btn" data-sys="航電/飛操" onclick="setFormSys(this)">航電<br>飛操</button>
+          <button class="sys-btn" data-sys="液壓" onclick="setFormSys(this)">液壓</button>
+          <button class="sys-btn" data-sys="燃油" onclick="setFormSys(this)">燃油</button>
+          <button class="sys-btn" data-sys="環控/氧氣" onclick="setFormSys(this)">環控<br>氧氣</button>
+          <button class="sys-btn" data-sys="起落架" onclick="setFormSys(this)">起落架</button>
+          <button class="sys-btn" data-sys="武器" onclick="setFormSys(this)">武器</button>
+          <button class="sys-btn other-btn" data-sys="__other__" onclick="setFormSys(this)">其他…</button>
+        </div>
+        <div class="other-popup" id="eq-sys-other">
+          <input type="text" id="eq-sys-other-val" placeholder="輸入自訂系統別" autocomplete="off">
+          <button class="ok-btn" onclick="confirmOther('eq-sys','eq-sys-other-val',setFormSysVal)">確定</button>
+        </div>
+      </div>
+      <div class="field"><label>存放位置</label>
+        <div class="loc-grid" id="eq-loc-grid">
+          <button class="loc-btn" data-loc="17/18" onclick="setEqLoc(this)">17/18</button>
+          <button class="loc-btn" data-loc="17棚庫房" onclick="setEqLoc(this)">17棚庫房</button>
+          <button class="loc-btn" data-loc="35/36" onclick="setEqLoc(this)">35/36</button>
+          <button class="loc-btn" data-loc="37/38" onclick="setEqLoc(this)">37/38</button>
+          <button class="loc-btn" data-loc="23" onclick="setEqLoc(this)">23</button>
+          <button class="loc-btn other-btn" data-loc="__other__" onclick="setEqLoc(this)">其他…</button>
+        </div>
+        <div class="other-popup" id="eq-loc-other">
+          <input type="text" id="eq-loc-other-val" placeholder="輸入自訂位置" autocomplete="off">
+          <button class="ok-btn" onclick="confirmOther('eq-loc','eq-loc-other-val',setEqLocVal)">確定</button>
+        </div>
+      </div>
+      <div class="field"><label>備註</label>
+        <textarea id="eq-note" placeholder="保管人…"></textarea></div>
+      <div class="field"><label>使用情況 *</label>
+        <div class="eq-status-row">
+          <button class="sbtn ok" id="eq-btn-ok" onclick="setEqSt('ok')">✅ 正常</button>
+          <button class="sbtn ng" id="eq-btn-ng" onclick="setEqSt('ng')">⚠️ 故障</button>
+        </div>
+      </div>
+    </div>
+    <div class="sc">
+      <div class="sc-title">📷 照片</div>
+      <div class="photo-drop" onclick="document.getElementById('photoInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <p>點此拍照 / 選取圖片</p>
+      </div>
+      <div class="photo-grid" id="photoGrid"></div>
+    </div>
+    <button class="btn-p" onclick="saveEquip()">💾 儲存裝備</button>
+    <button class="btn-s" onclick="clearForm()">🗑 清除</button>
+  </div>
+
+  <!-- 儀校表單 -->
+  <div id="form-instr" style="display:none">
+    <div class="sc">
+      <div class="sc-title">📐 儀校資料</div>
+      <div class="field"><label>儀校編號 *</label>
+        <input type="text" id="ins-id" placeholder="例：CAL-001" autocomplete="off"></div>
+      <div class="field"><label>儀具名稱 *</label>
+        <input type="text" id="ins-name" placeholder="例：液壓壓力錶"></div>
+      <div class="field"><label>廠牌</label>
+        <input type="text" id="ins-brand" placeholder="例：WIKA"></div>
+      <div class="field"><label>型號</label>
+        <input type="text" id="ins-model" placeholder="例：EN 837-1"></div>
+
+      <div class="field"><label>地點 *</label>
+        <div class="loc-grid" id="ins-loc-grid">
+          <button class="loc-btn" data-loc="17/18" onclick="setFormLoc(this)">17/18</button>
+          <button class="loc-btn" data-loc="17棚庫房" onclick="setFormLoc(this)">17棚庫房</button>
+          <button class="loc-btn" data-loc="35/36" onclick="setFormLoc(this)">35/36</button>
+          <button class="loc-btn" data-loc="37/38" onclick="setFormLoc(this)">37/38</button>
+          <button class="loc-btn" data-loc="23" onclick="setFormLoc(this)">23</button>
+          <button class="loc-btn other-btn" data-loc="__other__" onclick="setFormLoc(this)">其他…</button>
+        </div>
+        <div class="other-popup" id="ins-loc-other">
+          <input type="text" id="ins-loc-other-val" placeholder="輸入自訂地點" autocomplete="off">
+          <button class="ok-btn" onclick="confirmOther('ins-loc','ins-loc-other-val',setInsLocVal)">確定</button>
+        </div>
+      </div>
+
+      <div class="field"><label>量測範圍</label>
+        <div class="range-row">
+          <input type="number" id="ins-range-min" placeholder="最小值" step="any">
+          <span class="range-sep">～</span>
+          <input type="number" id="ins-range-max" placeholder="最大值" step="any">
+          <input type="text" id="ins-range-unit" placeholder="單位" style="width:72px;flex-shrink:0">
+        </div>
+        <div class="field-hint">例：0 ～ 700 kPa</div>
+      </div>
+
+      <div class="field"><label>介質 *</label>
+        <div class="med-grid" id="ins-med-grid">
+          <button class="med-btn" data-med="液壓" onclick="setFormMed(this)">液壓</button>
+          <button class="med-btn" data-med="燃油" onclick="setFormMed(this)">燃油</button>
+          <button class="med-btn" data-med="氣體" onclick="setFormMed(this)">氣體</button>
+          <button class="med-btn" data-med="不適用" onclick="setFormMed(this)">不適用</button>
+        </div>
+      </div>
+
+      <div class="field"><label>備註</label>
+        <textarea id="ins-note" placeholder="保管人…"></textarea></div>
+
+      <div class="field">
+        <label>連結裝備 <span style="color:var(--txt2);font-weight:400">（選填）</span></label>
+        <div class="asset-search-wrap">
+          <input type="text" id="ins-asset-search" placeholder="輸入裝備名稱或財產編號…"
+            autocomplete="off" oninput="searchAssets()" onfocus="searchAssets()">
+          <div class="asset-dropdown" id="assetDropdown"></div>
+        </div>
+        <div class="selected-asset" id="selectedAssetBox" style="display:none">
+          <div style="flex:1">
+            <div class="sa-id" id="sa-id"></div>
+            <div class="sa-name" id="sa-name"></div>
+          </div>
+          <button class="sa-clear" onclick="clearAssetLink()">✕</button>
+        </div>
+      </div>
+
+      <!-- 儀器狀態 + 校驗截止日 -->
+      <div class="field"><label>儀器狀態 *</label>
+        <div class="eq-status-row">
+          <button class="sbtn ok" id="ins-btn-ok" onclick="setInsSt('ok')">✅ 正常</button>
+          <button class="sbtn ng" id="ins-btn-ng" onclick="setInsSt('ng')">⚠️ 故障</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>校驗截止日 <span style="color:var(--txt2);font-weight:400">（選填，由後台匯入亦可）</span></label>
+        <input type="date" id="ins-cal-expiry" oninput="updateCalHint()">
+        <div class="field-hint" id="ins-cal-hint"></div>
+      </div>
+      <div class="field">
+        <label>校驗週期（天）<span style="color:var(--txt2);font-weight:400">（選填，由後台匯入亦可）</span></label>
+        <input type="number" id="ins-cal-period" placeholder="例：360" min="1" step="1" oninput="updateCalHint()">
+        <div class="field-hint">即將到期提醒 = 週期 ÷ 3（例：360天週期 → 120天前提醒）</div>
+      </div>
+    </div>
+    <div class="sc">
+      <div class="sc-title">📷 照片</div>
+      <div class="photo-drop" onclick="document.getElementById('photoInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <p>點此拍照 / 選取圖片</p>
+      </div>
+      <div class="photo-grid" id="photoGridIns"></div>
+    </div>
+    <button class="btn-p" onclick="saveInstr()">💾 儲存儀校資料</button>
+    <button class="btn-s" onclick="clearForm()">🗑 清除</button>
+  </div>
+</div>
+
+<!-- ═══ 統計 ═══ -->
 <div class="page" id="page-stats">
   <div class="sg">
-    <div class="sk"><div class="sk-num" id="s-tot">0</div><div class="sk-lbl">總裝備數</div></div>
-    <div class="sk"><div class="sk-num ok" id="s-ok">0</div><div class="sk-lbl">正常</div></div>
-    <div class="sk"><div class="sk-num ng" id="s-ng">0</div><div class="sk-lbl">故障</div></div>
-    <div class="sk"><div class="sk-num w" id="s-ph">0</div><div class="sk-lbl">含照片</div></div>
+    <div class="sk"><div class="sk-num w" id="s-eq">0</div><div class="sk-lbl">裝備總數</div></div>
+    <div class="sk"><div class="sk-num p" id="s-ins">0</div><div class="sk-lbl">儀校總數</div></div>
+    <div class="sk"><div class="sk-num ok" id="s-eq-ok">0</div><div class="sk-lbl">裝備正常</div></div>
+    <div class="sk"><div class="sk-num ng" id="s-eq-ng">0</div><div class="sk-lbl">裝備故障</div></div>
+    <div class="sk"><div class="sk-num ok" id="s-ins-ok">0</div><div class="sk-lbl">儀器正常</div></div>
+    <div class="sk"><div class="sk-num ng" id="s-ins-ng">0</div><div class="sk-lbl">儀器故障</div></div>
+    <div class="sk"><div class="sk-num e" id="s-ins-expire">0</div><div class="sk-lbl">校驗逾期</div></div>
+    <div class="sk"><div class="sk-num w" id="s-ins-soon">0</div><div class="sk-lbl">即將到期</div></div>
   </div>
-  <div class="sc">
-    <div class="sc-title">系統別分佈</div>
-    <div id="sysCt"></div>
-  </div>
-  <div class="sc">
-    <div class="sc-title">廠牌分佈</div>
-    <div id="brandCt"></div>
-  </div>
+  <div class="sc"><div class="sc-title">裝備系統別</div><div id="sys-stat"></div></div>
+  <div class="sc"><div class="sc-title">儀校地點分佈</div><div id="loc-stat"></div></div>
   <div class="sc">
     <div class="sc-title">🔄 資料管理</div>
     <div class="io-grid">
       <div class="io-btn" onclick="exportExcel()">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
-        匯出 Excel
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>匯出 Excel
       </div>
       <div class="io-btn blue" onclick="document.getElementById('xlsxInput').click()">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><polyline points="15 15 12 12 9 15"/></svg>
-        匯入 Excel
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><polyline points="15 15 12 12 9 15"/></svg>匯入 Excel
       </div>
       <div class="io-btn" onclick="exportJSON()">
-        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-        備份 JSON
+        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>備份 JSON
       </div>
       <div class="io-btn blue" onclick="document.getElementById('jsonInput').click()">
-        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-        還原 JSON
+        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>還原 JSON
       </div>
     </div>
-    <div style="margin-top:12px;font-size:11px;color:var(--txt2);line-height:1.8">
-      📌 Excel 匯出含兩個工作表：裝備清單 + 照片資料<br>
-      📌 JSON 備份完整含照片，推薦定期備份<br>
-      📶 離線模式下資料仍可正常新增與查詢
+    <div style="margin-top:10px;font-size:11px;color:var(--txt2);line-height:1.8">
+      📌 匯入 Excel 可更新校驗屆期日（儀校清單工作表）<br>
+      📌 JSON 備份含完整照片及連結關係
     </div>
   </div>
 </div>
 
 <!-- TAB BAR -->
 <div class="tab-bar">
-  <div class="tab active" onclick="showTab('add',this)">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    新增
+  <div class="tab active" id="tab-equip" onclick="showTab('equip',this);renderEquip()">
+    <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>裝備
   </div>
-  <div class="tab" onclick="showTab('list',this);renderList()">
-    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 4"/><polyline points="3 12 4 13 6 10"/><polyline points="3 18 4 19 6 16"/></svg>
-    記錄列表
+  <div class="tab" id="tab-instr" onclick="showTab('instr',this);renderInstr()">
+    <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>儀校
   </div>
-  <div class="tab" onclick="showTab('stats',this);renderStats()">
-    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    統計
+  <div class="tab" id="tab-add" onclick="showTab('add',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增
+  </div>
+  <div class="tab" id="tab-stats" onclick="showTab('stats',this);renderStats()">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>統計
   </div>
 </div>
 
-<!-- DETAIL MODAL -->
 <div class="overlay" id="overlay" onclick="maybeClose(event)">
   <div class="modal"><div class="modal-handle"></div><div id="modalBody"></div></div>
 </div>
-
-<!-- LIGHTBOX -->
 <div class="lb" id="lb" onclick="document.getElementById('lb').classList.remove('open')">
   <button class="lb-close" onclick="event.stopPropagation();document.getElementById('lb').classList.remove('open')">×</button>
   <img id="lbImg" src="" alt="">
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 const SYSTEMS=['航電/飛操','液壓','燃油','環控/氧氣','起落架','武器'];
+const LOCATIONS=['17/18','17棚庫房','35/36','37/38','23'];
+const CAL_LABEL={valid:'✓ 有效',expire:'✗ 逾期',soon:'⏰ 即將到期',none:'— 未設定'};
 
-if('serviceWorker' in navigator){
+if('serviceWorker' in navigator)
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-}
 function updateOnline(){document.getElementById('offlineBar').classList.toggle('show',!navigator.onLine)}
 window.addEventListener('online',updateOnline);window.addEventListener('offline',updateOnline);updateOnline();
 
-// ── DB ──────────────────────────────────────────────────────
-let DB,fStatus='all',fSys='all',photos=[],curSt='',curSys='',editId=null;
-
+// ── DB ─────────────────────────────────────────────────────
+let DB;
 function openDB(){return new Promise((res,rej)=>{
-  const r=indexedDB.open('EqDB3',1);
-  r.onupgradeneeded=e=>e.target.result.createObjectStore('rec',{keyPath:'id',autoIncrement:true});
+  const r=indexedDB.open('EqDB5',1);
+  r.onupgradeneeded=e=>{
+    const db=e.target.result;
+    if(!db.objectStoreNames.contains('equip')) db.createObjectStore('equip',{keyPath:'id',autoIncrement:true});
+    if(!db.objectStoreNames.contains('instr')) db.createObjectStore('instr',{keyPath:'id',autoIncrement:true});
+  };
   r.onsuccess=e=>{DB=e.target.result;res()};r.onerror=rej;
 })}
-const tx=(m='readonly')=>DB.transaction('rec',m).objectStore('rec');
-const dbAll=()=>new Promise(r=>{tx().getAll().onsuccess=e=>r(e.target.result)});
-const dbAdd=d=>new Promise(r=>{tx('readwrite').add(d).onsuccess=e=>r(e.target.result)});
-const dbPut=d=>new Promise(r=>{tx('readwrite').put(d).onsuccess=r});
-const dbDel=id=>new Promise(r=>{tx('readwrite').delete(id).onsuccess=r});
+const store=(n,m='readonly')=>DB.transaction(n,m).objectStore(n);
+const getAll=n=>new Promise(r=>{store(n).getAll().onsuccess=e=>r(e.target.result)});
+const addRec=(n,d)=>new Promise(r=>{store(n,'readwrite').add(d).onsuccess=e=>r(e.target.result)});
+const putRec=(n,d)=>new Promise(r=>{store(n,'readwrite').put(d).onsuccess=r});
+const delRec=(n,id)=>new Promise(r=>{store(n,'readwrite').delete(id).onsuccess=r});
 
-// ── UI ───────────────────────────────────────────────────────
+// ── STATE ───────────────────────────────────────────────────
+let photos=[],curType='equip';
+let eqSt='',eqSys='',eqLoc='';
+let insSt='',insLoc='',insMed='';
+let editId=null,editType=null,linkedAssetId=null;
+let fEqSys='all',fEqStatus='all';
+let fInsLoc='all',fInsStatus='all',fInsCal='all';
+
+// ── TAB / SUB-TAB ───────────────────────────────────────────
 function showTab(n,el){
+  const map={equip:'page-equip',instr:'page-instr',add:'page-add',stats:'page-stats'};
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+n).classList.add('active');el.classList.add('active');
+  document.getElementById(map[n]).classList.add('active');el.classList.add('active');
+}
+function switchAdd(type){
+  curType=type;
+  document.getElementById('sub-equip').classList.toggle('active',type==='equip');
+  document.getElementById('sub-instr').classList.toggle('active',type==='instr');
+  document.getElementById('form-equip').style.display=type==='equip'?'block':'none';
+  document.getElementById('form-instr').style.display=type==='instr'?'block':'none';
+  photos=[];renderThumbs();
 }
 
-function setSys(btn){
-  curSys=btn.dataset.sys;
-  document.querySelectorAll('.sys-btn').forEach(b=>b.classList.remove('sel'));
+// ── FORM HELPERS ────────────────────────────────────────────
+const v=id=>document.getElementById(id).value.trim();
+const vn=id=>{const val=document.getElementById(id).value.trim();return val===''?null:Number(val)};
+
+function setEqSt(s){eqSt=s;
+  document.getElementById('eq-btn-ok').classList.toggle('sel',s==='ok');
+  document.getElementById('eq-btn-ng').classList.toggle('sel',s==='ng');}
+function setInsSt(s){insSt=s;
+  document.getElementById('ins-btn-ok').classList.toggle('sel',s==='ok');
+  document.getElementById('ins-btn-ng').classList.toggle('sel',s==='ng');}
+function setFormSys(btn){
+  if(btn.dataset.sys==='__other__'){
+    document.querySelectorAll('#eq-sys-grid .sys-btn').forEach(b=>b.classList.remove('sel'));
+    btn.classList.add('sel');
+    document.getElementById('eq-sys-other').classList.add('open');
+    document.getElementById('eq-sys-other-val').focus();
+    return;
+  }
+  document.getElementById('eq-sys-other').classList.remove('open');
+  eqSys=btn.dataset.sys;
+  document.querySelectorAll('#eq-sys-grid .sys-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
 }
+function setFormSysVal(val){eqSys=val;}
 
-function setSt(s){
-  curSt=s;
-  document.getElementById('btn-ok').classList.toggle('sel',s==='ok');
-  document.getElementById('btn-ng').classList.toggle('sel',s==='ng');
+function setEqLoc(btn){
+  if(btn.dataset.loc==='__other__'){
+    document.querySelectorAll('#eq-loc-grid .loc-btn').forEach(b=>b.classList.remove('sel'));
+    btn.classList.add('sel');
+    document.getElementById('eq-loc-other').classList.add('open');
+    document.getElementById('eq-loc-other-val').focus();
+    return;
+  }
+  document.getElementById('eq-loc-other').classList.remove('open');
+  eqLoc=btn.dataset.loc;
+  document.querySelectorAll('#eq-loc-grid .loc-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
 }
-function v(id){return document.getElementById(id).value.trim()}
+function setEqLocVal(val){eqLoc=val;}
+
+function setFormLoc(btn){
+  if(btn.dataset.loc==='__other__'){
+    document.querySelectorAll('#ins-loc-grid .loc-btn').forEach(b=>b.classList.remove('sel'));
+    btn.classList.add('sel');
+    document.getElementById('ins-loc-other').classList.add('open');
+    document.getElementById('ins-loc-other-val').focus();
+    return;
+  }
+  document.getElementById('ins-loc-other').classList.remove('open');
+  insLoc=btn.dataset.loc;
+  document.querySelectorAll('#ins-loc-grid .loc-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function setInsLocVal(val){insLoc=val;}
+
+function confirmOther(gridId,inputId,setFn){
+  const val=document.getElementById(inputId).value.trim();
+  if(!val) return;
+  setFn(val);
+  // update the 其他 button label to show the custom value
+  const btn=document.querySelector(`#${gridId}-grid .other-btn`);
+  if(btn) btn.textContent=val;
+  document.getElementById(`${gridId}-other`).classList.remove('open');
+}
+function setFormMed(btn){insMed=btn.dataset.med;
+  document.querySelectorAll('#ins-med-grid .med-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
+
+// cal hint: auto preview status when date changes
+function updateCalHint(){
+  const val=document.getElementById('ins-cal-expiry').value;
+  const period=parseInt(document.getElementById('ins-cal-period').value)||0;
+  const hint=document.getElementById('ins-cal-hint');
+  if(!val){hint.textContent='';return}
+  const s=calStatusFromDate(val,period);
+  const warnDays=period?Math.round(period/3):30;
+  const map={valid:'✓ 有效',soon:`⏰ 即將到期（${warnDays}天內）`,expire:'✗ 已逾期',none:''}
+  hint.textContent=map[s]||'';
+  hint.style.color=s==='valid'?'var(--acc2)':s==='soon'?'var(--warn)':s==='expire'?'var(--expire)':'var(--txt2)';
+}
+function calStatusFromDate(dateStr,period){
+  if(!dateStr) return 'none';
+  const expiry=new Date(dateStr);const now=new Date();
+  const diff=(expiry-now)/(1000*60*60*24);
+  if(diff<0) return 'expire';
+  const warnDays=period?Math.round(period/3):30;
+  if(diff<=warnDays) return 'soon';
+  return 'valid';
+}
 
 function handlePhotos(inp){
   Array.from(inp.files).forEach(f=>{
@@ -501,275 +784,527 @@ function handlePhotos(inp){
   });inp.value='';
 }
 function renderThumbs(){
-  document.getElementById('photoGrid').innerHTML=
+  const gid=curType==='equip'?'photoGrid':'photoGridIns';
+  document.getElementById(gid).innerHTML=
     photos.map((b,i)=>`<div class="pt"><img src="${b}"><button class="pt-del" onclick="rmPh(${i})">×</button></div>`).join('');
 }
 function rmPh(i){photos.splice(i,1);renderThumbs()}
 
-async function saveRec(){
-  const iid=v('f-id'),name=v('f-name');
-  if(!iid||!name){toast('請填寫儀具編號和中文名稱','err');return}
-  if(!curSt){toast('請選擇使用情況','err');return}
-  if(!curSys){toast('請選擇系統別','err');return}
-  const rec={
-    assetId:v('f-asset'),
-    instrIds:iid,          // 逗號分隔字串
-    name,brand:v('f-brand'),model:v('f-model'),
-    system:curSys,scope:v('f-scope'),note:v('f-note'),
-    status:curSt,photos:[...photos],createdAt:new Date().toISOString()
-  };
-  if(editId){rec.id=editId;await dbPut(rec);toast('✅ 已更新！');editId=null;}
-  else{await dbAdd(rec);toast('✅ 已儲存！')}
-  clearForm();
+// ── ASSET SEARCH ────────────────────────────────────────────
+async function searchAssets(){
+  const q=document.getElementById('ins-asset-search').value.toLowerCase();
+  const dd=document.getElementById('assetDropdown');
+  if(!q){dd.classList.remove('open');return}
+  const hits=(await getAll('equip')).filter(r=>[r.name,r.assetId].join(' ').toLowerCase().includes(q)).slice(0,8);
+  if(!hits.length){dd.classList.remove('open');return}
+  dd.innerHTML=hits.map(r=>`<div class="asset-option" onclick="selectAsset(${r.id},'${escH(r.assetId||'')}','${escH(r.name)}')">
+    <div class="opt-id">${escH(r.assetId||'（無財產編號）')}</div>
+    <div class="opt-name">${escH(r.name)}</div></div>`).join('');
+  dd.classList.add('open');
+}
+function selectAsset(id,assetId,name){
+  linkedAssetId=id;
+  document.getElementById('ins-asset-search').value='';
+  document.getElementById('assetDropdown').classList.remove('open');
+  document.getElementById('sa-id').textContent=assetId||'（無財產編號）';
+  document.getElementById('sa-name').textContent=name;
+  document.getElementById('selectedAssetBox').style.display='flex';
+}
+function clearAssetLink(){
+  linkedAssetId=null;
+  document.getElementById('selectedAssetBox').style.display='none';
+  document.getElementById('sa-id').textContent='';
+  document.getElementById('sa-name').textContent='';
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.asset-search-wrap'))
+    document.getElementById('assetDropdown').classList.remove('open');
+});
+
+// ── SAVE ────────────────────────────────────────────────────
+async function saveEquip(){
+  const name=v('eq-name');
+  if(!name){toast('請填寫裝備名稱','err');return}
+  if(!eqSys){toast('請選擇系統別','err');return}
+  if(!eqSt){toast('請選擇使用情況','err');return}
+  const rec={assetId:v('eq-asset'),name,brand:v('eq-brand'),model:v('eq-model'),
+    system:eqSys,location:eqLoc,note:v('eq-note'),status:eqSt,
+    photos:[...photos],createdAt:new Date().toISOString()};
+  if(editId&&editType==='equip'){rec.id=editId;await putRec('equip',rec);toast('✅ 裝備已更新');}
+  else{await addRec('equip',rec);toast('✅ 裝備已儲存')}
+  clearForm();renderEquip();
+}
+
+async function saveInstr(){
+  const iid=v('ins-id'),name=v('ins-name');
+  if(!iid||!name){toast('請填寫儀校編號和名稱','err');return}
+  if(!insLoc){toast('請選擇地點','err');return}
+  if(!insMed){toast('請選擇介質','err');return}
+  if(!insSt){toast('請選擇儀器狀態','err');return}
+  const rMin=vn('ins-range-min'),rMax=vn('ins-range-max'),rUnit=v('ins-range-unit');
+  const calExpiry=v('ins-cal-expiry');
+  const calPeriod=parseInt(document.getElementById('ins-cal-period').value)||0;
+  const calStatus=calStatusFromDate(calExpiry,calPeriod);
+  const rec={instrId:iid,name,brand:v('ins-brand'),model:v('ins-model'),
+    location:insLoc,medium:insMed,rangeMin:rMin,rangeMax:rMax,rangeUnit:rUnit,
+    note:v('ins-note'),linkedEquipId:linkedAssetId,
+    status:insSt,calExpiry,calPeriod,calStatus,
+    photos:[...photos],createdAt:new Date().toISOString()};
+  if(editId&&editType==='instr'){rec.id=editId;await putRec('instr',rec);toast('✅ 儀校資料已更新');}
+  else{await addRec('instr',rec);toast('✅ 儀校資料已儲存')}
+  clearForm();renderInstr();
 }
 
 function clearForm(){
-  ['f-asset','f-id','f-name','f-brand','f-model','f-scope','f-note'].forEach(i=>document.getElementById(i).value='');
-  curSt='';curSys='';editId=null;
-  document.getElementById('btn-ok').classList.remove('sel');
-  document.getElementById('btn-ng').classList.remove('sel');
-  document.querySelectorAll('.sys-btn').forEach(b=>b.classList.remove('sel'));
+  ['eq-asset','eq-name','eq-brand','eq-model','eq-note',
+   'ins-id','ins-name','ins-brand','ins-model','ins-range-min','ins-range-max','ins-range-unit','ins-note','ins-asset-search','ins-cal-expiry','ins-cal-period']
+    .forEach(id=>document.getElementById(id).value='');
+  eqSt='';eqSys='';eqLoc='';insSt='';insLoc='';insMed='';editId=null;editType=null;
+  document.querySelectorAll('.sbtn,.sys-btn,.loc-btn,.med-btn').forEach(b=>b.classList.remove('sel'));
   document.getElementById('editBanner').classList.remove('show');
-  photos=[];renderThumbs();
+  document.getElementById('ins-cal-hint').textContent='';
+  document.querySelectorAll('.other-popup').forEach(p=>p.classList.remove('open'));
+  clearAssetLink();photos=[];renderThumbs();
 }
 
-// ── LIST ────────────────────────────────────────────────────
-function setF(type,el,f){
-  if(type==='status'){
-    fStatus=f;
-    document.querySelectorAll('#statusChips .chip').forEach(c=>c.classList.remove('on'));
-  } else {
-    fSys=f;
-    document.querySelectorAll('#sysChips .chip').forEach(c=>c.classList.remove('on'));
-  }
-  el.classList.add('on');
-  renderList();
+// ── FILTERS ─────────────────────────────────────────────────
+function setEqF(type,el,val){
+  if(type==='sys'){fEqSys=val;document.querySelectorAll('#eq-sys-chips .chip').forEach(c=>c.classList.remove('on'));}
+  else{fEqStatus=val;document.querySelectorAll('#eq-status-chips .chip').forEach(c=>c.classList.remove('on'));}
+  el.classList.add('on');renderEquip();
+}
+function setInsF(type,el,val){
+  if(type==='loc'){fInsLoc=val;document.querySelectorAll('#ins-loc-chips .chip').forEach(c=>c.classList.remove('on'));}
+  else if(type==='status'){fInsStatus=val;document.querySelectorAll('#ins-status-chips .chip').forEach(c=>c.classList.remove('on'));}
+  else{fInsCal=val;document.querySelectorAll('#ins-cal-chips .chip').forEach(c=>c.classList.remove('on'));}
+  el.classList.add('on');renderInstr();
 }
 
-async function renderList(){
-  const all=await dbAll();
-  const q=document.getElementById('searchInput').value.toLowerCase();
+// ── RENDER EQUIP ────────────────────────────────────────────
+async function renderEquip(){
+  const all=await getAll('equip');const allIns=await getAll('instr');
+  const q=document.getElementById('eq-search').value.toLowerCase();
   const items=all.filter(r=>{
-    const hit=[r.assetId,r.instrIds,r.name,r.brand,r.model,r.scope,r.system].join(' ').toLowerCase().includes(q);
-    const sf=fStatus==='all'||(fStatus==='nophoto'?!(r.photos&&r.photos.length):r.status===fStatus);
-    const sys=fSys==='all'||r.system===fSys;
-    return hit&&sf&&sys;
+    const hit=[r.assetId,r.name,r.brand,r.model].join(' ').toLowerCase().includes(q);
+    return hit&&(fEqSys==='all'||r.system===fEqSys)&&(fEqStatus==='all'||r.status===fEqStatus);
   }).reverse();
-
-  const ct=document.getElementById('listCt');
-  if(!items.length){
-    ct.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>無符合記錄</div>`;
-    return;
-  }
-
+  const ct=document.getElementById('equip-list');
+  if(!items.length){ct.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>無符合裝備</div>`;return;}
   ct.innerHTML=items.map(r=>{
-    // 儀具編號 tags（最多顯示3個）
-    const ids=(r.instrIds||'').split(',').map(s=>s.trim()).filter(Boolean);
-    const idDisplay=ids.slice(0,3).map(id=>`<span style="font-family:'JetBrains Mono';font-size:10px;background:rgba(0,201,167,.1);color:var(--acc);border:1px solid rgba(0,201,167,.2);border-radius:5px;padding:1px 6px">${escH(id)}</span>`).join(' ')
-      +(ids.length>3?` <span style="font-size:10px;color:var(--txt2)">+${ids.length-3}</span>`:'');
-
+    const linked=allIns.filter(i=>i.linkedEquipId===r.id);
+    const instrHtml=linked.length
+      ?`<div class="instr-mini"><div class="instr-mini-label">掛載儀具 ${linked.length} 件</div>
+         <div class="instr-tags">${linked.map(i=>`<span class="instr-tag">${escH(i.instrId)}</span>`).join('')}</div></div>`:''
     let strip='';
     if(r.photos&&r.photos.length){
-      const show=r.photos.slice(0,5);
-      strip=show.map(p=>`<img src="${p}" onclick="event.stopPropagation();openLb('${p}')">`).join('');
-      if(r.photos.length>5) strip+=`<div class="eq-more-chip"><span>+${r.photos.length-5}</span>更多</div>`;
+      strip=r.photos.slice(0,4).map(p=>`<img src="${p}" onclick="event.stopPropagation();openLb('${p}')">`).join('');
+      if(r.photos.length>4) strip+=`<div class="eq-more-chip"><span>+${r.photos.length-4}</span></div>`;
       strip=`<div class="eq-strip">${strip}</div>`;
     }
-
-    return `<div class="eq" onclick="openDetail(${r.id})">
-      <div class="eq-top">
-        <div class="eq-info">
-          ${r.assetId?`<div class="eq-asset">財產 <span>${escH(r.assetId)}</span></div>`:''}
-          <div class="eq-name">${escH(r.name)}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${idDisplay}</div>
+    return `<div class="eq-card" onclick="openEquipDetail(${r.id})">
+      <div class="card-top">
+        <div class="card-info">
+          ${r.assetId?`<div class="asset-id-tag">${escH(r.assetId)}</div>`:''}
+          <div class="card-name">${escH(r.name)}</div>
+          <div class="card-sub">${escH([r.brand,r.model].filter(Boolean).join(' · ')||'—')}</div>
         </div>
-        <div class="eq-right">
-          <div class="eq-badge ${r.status}">${r.status==='ok'?'正常':'故障'}</div>
-          ${r.system?`<div class="eq-sys">${escH(r.system)}</div>`:''}
+        <div class="card-right">
+          <div class="badge ${r.status}">${r.status==='ok'?'正常':'故障'}</div>
+          ${r.system?`<div class="badge sys">${escH(r.system)}</div>`:''}
+          ${r.location?`<div class="badge loc">${escH(r.location)}</div>`:''}
         </div>
       </div>
-      ${strip}
-      <div class="eq-footer">
-        <div class="eq-scope">${escH(r.scope||'—')}</div>
-        <div class="eq-arrow">詳情 ›</div>
-      </div>
+      ${instrHtml}${strip}
+      <div class="card-footer"><div class="card-foot-txt">${escH(r.note||'—')}</div><div class="card-arrow">詳情 ›</div></div>
     </div>`;
   }).join('');
 }
 
-function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function openLb(src){document.getElementById('lbImg').src=src;document.getElementById('lb').classList.add('open')}
+// ── RENDER INSTR ────────────────────────────────────────────
+function rangeStr(r){
+  if(r.rangeMin==null&&r.rangeMax==null) return '—';
+  const mn=r.rangeMin??'';const mx=r.rangeMax??'';const u=r.rangeUnit?` ${r.rangeUnit}`:'';
+  return `${mn} ～ ${mx}${u}`;
+}
 
-// ── DETAIL MODAL ────────────────────────────────────────────
-async function openDetail(id){
-  const all=await dbAll();const r=all.find(x=>x.id===id);if(!r) return;
+async function renderInstr(){
+  const all=await getAll('instr');const allEq=await getAll('equip');
+  const q=document.getElementById('ins-search').value.toLowerCase();
+  const items=all.filter(r=>{
+    const hit=[r.instrId,r.name,r.brand,r.model,r.location].join(' ').toLowerCase().includes(q);
+    const loc=fInsLoc==='all'||r.location===fInsLoc;
+    const st=fInsStatus==='all'||(fInsStatus==='nophoto'?!(r.photos&&r.photos.length):r.status===fInsStatus);
+    const cal=fInsCal==='all'||calStatusFromDate(r.calExpiry,r.calPeriod)===fInsCal;
+    return hit&&loc&&st&&cal;
+  }).reverse();
+  const ct=document.getElementById('instr-list');
+  if(!items.length){ct.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>無符合儀校資料</div>`;return;}
+  ct.innerHTML=items.map(r=>{
+    const eq=r.linkedEquipId?allEq.find(e=>e.id===r.linkedEquipId):null;
+    const linkHtml=eq
+      ?`<div class="ins-linked"><span class="ins-linked-label">裝備於</span><span class="ins-linked-id">${escH(eq.assetId||'—')}</span><span class="ins-linked-name">${escH(eq.name)}</span></div>`
+      :`<div class="ins-no-link">未連結裝備</div>`;
+    const calStatus=calStatusFromDate(r.calExpiry,r.calPeriod);
+    const calBadge=calStatus!=='none'?`<div class="badge ${calStatus}">${CAL_LABEL[calStatus]||''}</div>`:'';
+    const medBadge=r.medium&&r.medium!=='不適用'?`<div class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;border:1px solid rgba(167,139,250,.3);font-size:10px">${escH(r.medium)}</div>`:'';
+    let strip='';
+    if(r.photos&&r.photos.length){
+      strip=r.photos.slice(0,4).map(p=>`<img src="${p}" onclick="event.stopPropagation();openLb('${p}')">`).join('');
+      if(r.photos.length>4) strip+=`<div class="eq-more-chip"><span>+${r.photos.length-4}</span></div>`;
+      strip=`<div class="eq-strip">${strip}</div>`;
+    }
+    return `<div class="ins-card" onclick="openInsDetail(${r.id})">
+      <div class="card-top">
+        <div class="card-info">
+          <div class="instr-id-tag">${escH(r.instrId)}</div>
+          <div class="card-name">${escH(r.name)}</div>
+          <div class="card-sub">${escH([r.brand,r.model].filter(Boolean).join(' · ')||'—')}</div>
+        </div>
+        <div class="card-right">
+          <div class="badge ${r.status}">${r.status==='ok'?'正常':'故障'}</div>
+          ${calBadge}
+          ${medBadge}
+          ${r.location?`<div class="badge loc">${escH(r.location)}</div>`:''}
+        </div>
+      </div>
+      ${linkHtml}${strip}
+      <div class="card-footer"><div class="card-foot-txt">${rangeStr(r)}</div><div class="card-arrow">詳情 ›</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── DETAIL MODALS ───────────────────────────────────────────
+function escH(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function openLb(src){document.getElementById('lbImg').src=src;document.getElementById('lb').classList.add('open')}
+function gallHtml(photos){
+  if(!photos||!photos.length) return '';
+  const w='calc(100vw - 60px)';
+  return `<div class="m-gallery" id="mGall">${photos.map(p=>`<img src="${p}" style="width:${w}" onclick="openLb('${p}')">`).join('')}</div>
+    <div class="m-dots">${photos.map((_,i)=>`<div class="m-dot${i===0?' on':''}"></div>`).join('')}</div>`;
+}
+function initGall(n){if(n<2)return;requestAnimationFrame(()=>{
+  const g=document.getElementById('mGall');if(!g)return;
+  g.addEventListener('scroll',()=>{
+    const idx=Math.round(g.scrollLeft/(g.scrollWidth/n));
+    document.querySelectorAll('.m-dot').forEach((d,i)=>d.classList.toggle('on',i===idx));
+  },{passive:true});
+});}
+
+async function openEquipDetail(id){
+  const all=await getAll('equip');const r=all.find(x=>x.id===id);if(!r)return;
+  const linked=(await getAll('instr')).filter(i=>i.linkedEquipId===id);
   const d=new Date(r.createdAt);
   const ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-
-  const ids=(r.instrIds||'').split(',').map(s=>s.trim()).filter(Boolean);
-  const idTags=ids.map(i=>`<span class="iid-tag">${escH(i)}</span>`).join('');
-
-  const gallW='calc(100vw - 60px)';
-  const gall=r.photos&&r.photos.length
-    ?`<div class="m-gallery" id="mGall">${r.photos.map(p=>`<img src="${p}" style="width:${gallW}" onclick="openLb('${p}')">`).join('')}</div>
-      <div class="m-dots">${r.photos.map((_,i)=>`<div class="m-dot${i===0?' on':''}"></div>`).join('')}</div>`:'';
-
+  const linkedHtml=linked.length
+    ?`<div>${linked.map(i=>`<div class="m-instr-item">
+        <span class="instr-id-tag" style="font-size:10px">${escH(i.instrId)}</span>
+        <span style="font-size:13px;flex:1;margin-left:8px">${escH(i.name)}</span>
+        <span class="badge ${i.status}" style="font-size:10px">${i.status==='ok'?'正常':'故障'}</span>
+      </div>`).join('')}</div>`
+    :`<div style="font-size:12px;color:var(--txt2);padding-top:4px">無掛載儀具</div>`;
   document.getElementById('modalBody').innerHTML=`
-    ${gall}
+    ${gallHtml(r.photos)}
     ${r.assetId?`<div class="mf"><span class="l">財產編號</span><span class="v" style="font-family:'JetBrains Mono';color:var(--warn)">${escH(r.assetId)}</span></div>`:''}
-    <div class="mf"><span class="l">儀具編號</span><div class="iid-tags">${idTags||'—'}</div></div>
-    <div class="mf"><span class="l">中文名稱</span><span class="v">${escH(r.name)}</span></div>
-    <div class="mf"><span class="l">廠牌</span><span class="v">${escH(r.brand||'—')}</span></div>
-    <div class="mf"><span class="l">型號</span><span class="v">${escH(r.model||'—')}</span></div>
-    <div class="mf"><span class="l">系統別</span><span class="v"><span class="eq-sys">${escH(r.system||'—')}</span></span></div>
-    <div class="mf"><span class="l">使用範圍</span><span class="v" style="white-space:pre-wrap">${escH(r.scope||'—')}</span></div>
+    <div class="mf"><span class="l">裝備名稱</span><span class="v">${escH(r.name)}</span></div>
+    <div class="mf"><span class="l">廠牌 / 型號</span><span class="v">${escH([r.brand,r.model].filter(Boolean).join(' / ')||'—')}</span></div>
+    <div class="mf"><span class="l">系統別</span><span class="v"><span class="badge sys">${escH(r.system||'—')}</span></span></div>
+    <div class="mf"><span class="l">存放位置</span><span class="v">${r.location?`<span class="badge loc">${escH(r.location)}</span>`:'—'}</span></div>
+    <div class="mf"><span class="l">使用情況</span><span class="v"><span class="badge ${r.status}">${r.status==='ok'?'✅ 正常':'⚠️ 故障'}</span></span></div>
     <div class="mf"><span class="l">備註</span><span class="v" style="white-space:pre-wrap">${escH(r.note||'—')}</span></div>
-    <div class="mf"><span class="l">使用情況</span><span class="v"><span class="eq-badge ${r.status}">${r.status==='ok'?'✅ 正常':'⚠️ 故障'}</span></span></div>
-    <div class="mf"><span class="l">照片數量</span><span class="v">${(r.photos||[]).length} 張</span></div>
+    <div class="mf"><span class="l">照片</span><span class="v">${(r.photos||[]).length} 張</span></div>
+    <div class="mf" style="flex-direction:column;align-items:flex-start;gap:6px">
+      <span class="l">掛載儀具 ${linked.length} 件</span>${linkedHtml}
+    </div>
     <div class="m-ts">記錄時間：${ds}</div>
-    <button class="m-edit" onclick="startEdit(${r.id})">✏️ 編輯此記錄</button>
-    <button class="m-del" onclick="delRec(${r.id})">🗑 刪除此記錄</button>`;
+    <button class="m-edit" onclick="startEditEquip(${r.id})">✏️ 編輯</button>
+    <button class="m-del" onclick="doDelete('equip',${r.id})">🗑 刪除</button>`;
   document.getElementById('overlay').classList.add('open');
-  if(r.photos&&r.photos.length>1){
-    requestAnimationFrame(()=>{
-      const g=document.getElementById('mGall');if(!g)return;
-      g.addEventListener('scroll',()=>{
-        const idx=Math.round(g.scrollLeft/(g.scrollWidth/r.photos.length));
-        document.querySelectorAll('.m-dot').forEach((d,i)=>d.classList.toggle('on',i===idx));
-      },{passive:true});
-    });
-  }
+  initGall((r.photos||[]).length);
+}
+
+async function openInsDetail(id){
+  const all=await getAll('instr');const r=all.find(x=>x.id===id);if(!r)return;
+  const eq=r.linkedEquipId?(await getAll('equip')).find(e=>e.id===r.linkedEquipId):null;
+  const d=new Date(r.createdAt);
+  const ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const calStatus=calStatusFromDate(r.calExpiry,r.calPeriod);
+  const warnDays=r.calPeriod?Math.round(r.calPeriod/3):30;
+  const calBadge=calStatus!=='none'?`<span class="badge ${calStatus}">${CAL_LABEL[calStatus]}</span>`:'—';
+  document.getElementById('modalBody').innerHTML=`
+    ${gallHtml(r.photos)}
+    <div class="mf"><span class="l">儀校編號</span><span class="v" style="font-family:'JetBrains Mono';color:var(--acc)">${escH(r.instrId)}</span></div>
+    <div class="mf"><span class="l">儀具名稱</span><span class="v">${escH(r.name)}</span></div>
+    <div class="mf"><span class="l">廠牌 / 型號</span><span class="v">${escH([r.brand,r.model].filter(Boolean).join(' / ')||'—')}</span></div>
+    <div class="mf"><span class="l">地點</span><span class="v"><span class="badge loc">${escH(r.location||'—')}</span></span></div>
+    <div class="mf"><span class="l">介質</span><span class="v">${r.medium?`<span style="font-size:13px;font-weight:600;color:#a78bfa">${escH(r.medium)}</span>`:'—'}</span></div>
+    <div class="mf"><span class="l">量測範圍</span><span class="v">${escH(rangeStr(r))}</span></div>
+    <div class="mf"><span class="l">儀器狀態</span><span class="v"><span class="badge ${r.status}">${r.status==='ok'?'✅ 正常':'⚠️ 故障'}</span></span></div>
+    <div class="mf"><span class="l">校驗截止日</span><span class="v">${escH(r.calExpiry||'—')}</span></div>
+    <div class="mf"><span class="l">校驗週期</span><span class="v">${r.calPeriod?`${r.calPeriod} 天（提醒：${warnDays} 天前）`:'—'}</span></div>
+    <div class="mf"><span class="l">校驗狀態</span><span class="v">${calBadge}</span></div>
+    <div class="mf"><span class="l">安裝裝備</span><span class="v">${eq?`<span style="font-family:'JetBrains Mono';color:var(--warn);font-size:12px">${escH(eq.assetId||'—')}</span> ${escH(eq.name)}`:'未連結'}</span></div>
+    <div class="mf"><span class="l">備註</span><span class="v" style="white-space:pre-wrap">${escH(r.note||'—')}</span></div>
+    <div class="mf"><span class="l">照片</span><span class="v">${(r.photos||[]).length} 張</span></div>
+    <div class="m-ts">記錄時間：${ds}</div>
+    <button class="m-edit" onclick="startEditInstr(${r.id})">✏️ 編輯</button>
+    <button class="m-del" onclick="doDelete('instr',${r.id})">🗑 刪除</button>`;
+  document.getElementById('overlay').classList.add('open');
+  initGall((r.photos||[]).length);
 }
 
 function maybeClose(e){if(e.target===document.getElementById('overlay'))closeModal()}
 function closeModal(){document.getElementById('overlay').classList.remove('open')}
 
-async function startEdit(id){
-  closeModal();
-  const all=await dbAll();const r=all.find(x=>x.id===id);if(!r)return;
-  editId=id;
-  document.getElementById('f-asset').value=r.assetId||'';
-  document.getElementById('f-id').value=r.instrIds||'';
-  document.getElementById('f-name').value=r.name;
-  document.getElementById('f-brand').value=r.brand||'';
-  document.getElementById('f-model').value=r.model||'';
-  document.getElementById('f-scope').value=r.scope||'';
-  document.getElementById('f-note').value=r.note||'';
-  setSt(r.status);
-  // 系統別
-  curSys=r.system||'';
-  document.querySelectorAll('.sys-btn').forEach(b=>{
-    b.classList.toggle('sel',b.dataset.sys===curSys);
-  });
-  photos=[...(r.photos||[])];renderThumbs();
+async function startEditEquip(id){
+  closeModal();const all=await getAll('equip');const r=all.find(x=>x.id===id);if(!r)return;
+  editId=id;editType='equip';
+  document.getElementById('eq-asset').value=r.assetId||'';
+  document.getElementById('eq-name').value=r.name;
+  document.getElementById('eq-brand').value=r.brand||'';
+  document.getElementById('eq-model').value=r.model||'';
+  document.getElementById('eq-note').value=r.note||'';
+  eqSys=r.system||'';eqSt=r.status;eqLoc=r.location||'';
+  document.querySelectorAll('#eq-sys-grid .sys-btn').forEach(b=>b.classList.toggle('sel',b.dataset.sys===eqSys));
+  document.querySelectorAll('#eq-loc-grid .loc-btn').forEach(b=>b.classList.toggle('sel',b.dataset.loc===eqLoc));
+  document.getElementById('eq-btn-ok').classList.toggle('sel',eqSt==='ok');
+  document.getElementById('eq-btn-ng').classList.toggle('sel',eqSt==='ng');
+  photos=[...(r.photos||[])];curType='equip';renderThumbs();
+  document.getElementById('editLabel').textContent='✏️ 編輯裝備';
   document.getElementById('editBanner').classList.add('show');
-  showTab('add',document.querySelectorAll('.tab')[0]);
+  switchAdd('equip');showTab('add',document.getElementById('tab-add'));
   document.getElementById('page-add').scrollTo(0,0);
-  toast('已載入記錄，修改後儲存即可更新');
 }
 
-async function delRec(id){
-  if(!confirm('確定要刪除這筆記錄？'))return;
-  await dbDel(id);closeModal();toast('已刪除');renderList();
+async function startEditInstr(id){
+  closeModal();const all=await getAll('instr');const r=all.find(x=>x.id===id);if(!r)return;
+  editId=id;editType='instr';
+  document.getElementById('ins-id').value=r.instrId||'';
+  document.getElementById('ins-name').value=r.name;
+  document.getElementById('ins-brand').value=r.brand||'';
+  document.getElementById('ins-model').value=r.model||'';
+  document.getElementById('ins-range-min').value=r.rangeMin??'';
+  document.getElementById('ins-range-max').value=r.rangeMax??'';
+  document.getElementById('ins-range-unit').value=r.rangeUnit||'';
+  document.getElementById('ins-note').value=r.note||'';
+  insLoc=r.location||'';insSt=r.status;insMed=r.medium||'';
+  document.querySelectorAll('#ins-loc-grid .loc-btn').forEach(b=>b.classList.toggle('sel',b.dataset.loc===insLoc));
+  document.querySelectorAll('#ins-med-grid .med-btn').forEach(b=>b.classList.toggle('sel',b.dataset.med===insMed));
+  document.getElementById('ins-btn-ok').classList.toggle('sel',insSt==='ok');
+  document.getElementById('ins-btn-ng').classList.toggle('sel',insSt==='ng');
+  document.getElementById('ins-cal-expiry').value=r.calExpiry||'';
+  document.getElementById('ins-cal-period').value=r.calPeriod||'';
+  updateCalHint();
+  if(r.linkedEquipId){
+    const eq=(await getAll('equip')).find(e=>e.id===r.linkedEquipId);
+    if(eq) selectAsset(eq.id,eq.assetId||'',eq.name);
+  }
+  photos=[...(r.photos||[])];curType='instr';renderThumbs();
+  document.getElementById('editLabel').textContent='✏️ 編輯儀校資料';
+  document.getElementById('editBanner').classList.add('show');
+  switchAdd('instr');showTab('add',document.getElementById('tab-add'));
+  document.getElementById('page-add').scrollTo(0,0);
 }
 
-// ── STATS ────────────────────────────────────────────────────
+async function doDelete(type,id){
+  if(!confirm('確定要刪除？'))return;
+  await delRec(type,id);closeModal();toast('已刪除');
+  if(type==='equip') renderEquip(); else renderInstr();
+}
+
+// ── STATS ───────────────────────────────────────────────────
 async function renderStats(){
-  const all=await dbAll();
-  const ok=all.filter(r=>r.status==='ok').length;
-  const ng=all.filter(r=>r.status==='ng').length;
-  document.getElementById('s-tot').textContent=all.length;
-  document.getElementById('s-ok').textContent=ok;
-  document.getElementById('s-ng').textContent=ng;
-  document.getElementById('s-ph').textContent=all.filter(r=>(r.photos||[]).length>0).length;
+  const eqs=await getAll('equip');const ins=await getAll('instr');
+  document.getElementById('s-eq').textContent=eqs.length;
+  document.getElementById('s-ins').textContent=ins.length;
+  document.getElementById('s-eq-ok').textContent=eqs.filter(r=>r.status==='ok').length;
+  document.getElementById('s-eq-ng').textContent=eqs.filter(r=>r.status==='ng').length;
+  document.getElementById('s-ins-ok').textContent=ins.filter(r=>r.status==='ok').length;
+  document.getElementById('s-ins-ng').textContent=ins.filter(r=>r.status==='ng').length;
+  document.getElementById('s-ins-expire').textContent=ins.filter(r=>calStatusFromDate(r.calExpiry,r.calPeriod)==='expire').length;
+  document.getElementById('s-ins-soon').textContent=ins.filter(r=>calStatusFromDate(r.calExpiry,r.calPeriod)==='soon').length;
 
-  // 系統別
-  const sys={};
-  all.forEach(r=>{const s=r.system||'未設定';sys[s]=(sys[s]||0)+1});
-  const sysMax=Math.max(...Object.values(sys),1);
-  document.getElementById('sysCt').innerHTML=SYSTEMS.concat(Object.keys(sys).filter(k=>!SYSTEMS.includes(k))).filter(k=>sys[k]).map(s=>`
-    <div class="brand-row">
-      <div class="brand-row-top"><span>${escH(s)}</span><span style="color:var(--acc2);font-family:'JetBrains Mono'">${sys[s]||0}</span></div>
-      <div class="brand-bar" style="background:var(--acc2);width:${((sys[s]||0)/sysMax*100).toFixed(0)}%"></div>
+  const sys={};eqs.forEach(r=>{const s=r.system||'未設定';sys[s]=(sys[s]||0)+1});
+  const sMax=Math.max(...Object.values(sys),1);
+  document.getElementById('sys-stat').innerHTML=
+    SYSTEMS.filter(s=>sys[s]).map(s=>`<div class="bar-row">
+      <div class="bar-top"><span>${escH(s)}</span><span style="color:var(--acc);font-family:'JetBrains Mono'">${sys[s]}</span></div>
+      <div class="bar-fill" style="background:var(--acc2);width:${(sys[s]/sMax*100).toFixed(0)}%"></div>
     </div>`).join('')||'<div style="color:var(--txt2);font-size:13px">尚無資料</div>';
 
-  // 廠牌
-  const brands={};
-  all.forEach(r=>{const b=r.brand||'未填廠牌';brands[b]=(brands[b]||0)+1});
-  const sorted=Object.entries(brands).sort((a,b)=>b[1]-a[1]);
-  const max=sorted[0]?.[1]||1;
-  document.getElementById('brandCt').innerHTML=sorted.map(([b,n])=>`
-    <div class="brand-row">
-      <div class="brand-row-top"><span>${escH(b)}</span><span style="color:var(--acc);font-family:'JetBrains Mono'">${n}</span></div>
-      <div class="brand-bar" style="width:${(n/max*100).toFixed(0)}%"></div>
+  const loc={};ins.forEach(r=>{const l=r.location||'未設定';loc[l]=(loc[l]||0)+1});
+  const lMax=Math.max(...Object.values(loc),1);
+  document.getElementById('loc-stat').innerHTML=
+    LOCATIONS.filter(l=>loc[l]).concat(Object.keys(loc).filter(k=>!LOCATIONS.includes(k)&&loc[k]))
+    .map(l=>`<div class="bar-row">
+      <div class="bar-top"><span>${escH(l)}</span><span style="color:var(--warn);font-family:'JetBrains Mono'">${loc[l]}</span></div>
+      <div class="bar-fill" style="background:var(--warn);width:${(loc[l]/lMax*100).toFixed(0)}%"></div>
     </div>`).join('')||'<div style="color:var(--txt2);font-size:13px">尚無資料</div>';
 }
 
 // ── EXCEL ────────────────────────────────────────────────────
 async function exportExcel(){
-  const all=await dbAll();
-  if(!all.length){toast('沒有資料可匯出','err');return}
+  const eqs=await getAll('equip');const ins=await getAll('instr');
+  if(!eqs.length&&!ins.length){toast('沒有資料可匯出','err');return}
   const wb=XLSX.utils.book_new();
-  const hdr=['財產編號','儀具編號','中文名稱','廠牌','型號','系統別','使用範圍','備註','使用情況','照片數量','記錄時間'];
-  const rows=all.map(r=>[
-    r.assetId||'',r.instrIds||'',r.name,r.brand||'',r.model||'',r.system||'',
-    r.scope||'',r.note||'',r.status==='ok'?'正常':'故障',
-    (r.photos||[]).length,new Date(r.createdAt).toLocaleString('zh-TW')
+  // 裝備
+  const ws1=XLSX.utils.aoa_to_sheet([
+    ['財產編號','裝備名稱','廠牌','型號','系統別','存放位置','備註','使用情況','照片數','記錄時間'],
+    ...eqs.map(r=>[r.assetId||'',r.name,r.brand||'',r.model||'',r.system||'',r.location||'',r.note||'',
+      r.status==='ok'?'正常':'故障',(r.photos||[]).length,new Date(r.createdAt).toLocaleString('zh-TW')])
   ]);
-  const ws=XLSX.utils.aoa_to_sheet([hdr,...rows]);
-  ws['!cols']=[{wch:14},{wch:20},{wch:18},{wch:12},{wch:16},{wch:10},{wch:24},{wch:20},{wch:8},{wch:8},{wch:20}];
-  XLSX.utils.book_append_sheet(wb,ws,'裝備清單');
+  ws1['!cols']=[{wch:14},{wch:18},{wch:12},{wch:14},{wch:10},{wch:10},{wch:18},{wch:8},{wch:6},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws1,'裝備清單');
+  // 儀校
+  const eqMap={};eqs.forEach(e=>eqMap[e.id]=e);
+  const ws2=XLSX.utils.aoa_to_sheet([
+    ['儀校編號','儀具名稱','廠牌','型號','地點','介質','量測最小值','量測最大值','單位','備註',
+     '連結財產編號','連結裝備名稱','儀器狀態','校驗截止日','校驗週期(天)','校驗狀態','照片數','記錄時間'],
+    ...ins.map(r=>{
+      const eq=r.linkedEquipId?eqMap[r.linkedEquipId]:null;
+      const cs=calStatusFromDate(r.calExpiry,r.calPeriod);
+      return [r.instrId,r.name,r.brand||'',r.model||'',r.location||'',r.medium||'',
+        r.rangeMin??'',r.rangeMax??'',r.rangeUnit||'',r.note||'',
+        eq?(eq.assetId||''):'',eq?eq.name:'',
+        r.status==='ok'?'正常':'故障',
+        r.calExpiry||'',
+        r.calPeriod||'',
+        CAL_LABEL[cs]||'— 未設定',
+        (r.photos||[]).length,new Date(r.createdAt).toLocaleString('zh-TW')];
+    })
+  ]);
+  ws2['!cols']=[{wch:14},{wch:16},{wch:12},{wch:14},{wch:10},{wch:8},{wch:8},{wch:8},{wch:6},{wch:16},
+    {wch:12},{wch:16},{wch:8},{wch:12},{wch:8},{wch:10},{wch:6},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws2,'儀校清單');
+  // 照片
   const phRows=[];
-  all.forEach(r=>(r.photos||[]).forEach((p,i)=>phRows.push([r.instrIds||r.assetId||'',i+1,p])));
+  eqs.forEach(r=>(r.photos||[]).forEach((p,i)=>phRows.push(['裝備',r.assetId||r.name,i+1,p])));
+  ins.forEach(r=>(r.photos||[]).forEach((p,i)=>phRows.push(['儀具',r.instrId,i+1,p])));
   if(phRows.length){
-    const ws2=XLSX.utils.aoa_to_sheet([['儀具編號','照片序號','照片(base64)'],...phRows]);
-    ws2['!cols']=[{wch:20},{wch:8},{wch:80}];
-    XLSX.utils.book_append_sheet(wb,ws2,'照片資料');
+    const ws3=XLSX.utils.aoa_to_sheet([['類型','編號','序號','照片(base64)'],...phRows]);
+    ws3['!cols']=[{wch:6},{wch:16},{wch:6},{wch:80}];
+    XLSX.utils.book_append_sheet(wb,ws3,'照片資料');
   }
   XLSX.writeFile(wb,`裝備記錄_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast(`✅ 已匯出 ${all.length} 筆`);
+  toast(`✅ 已匯出裝備${eqs.length}筆、儀校${ins.length}筆`);
 }
 
 async function importExcel(inp){
   const f=inp.files[0];if(!f)return;
   const buf=await f.arrayBuffer();
   const wb=XLSX.read(buf,{type:'array'});
-  const photoMap={};
-  if(wb.SheetNames.includes('照片資料')){
-    XLSX.utils.sheet_to_json(wb.Sheets['照片資料'],{header:1}).slice(1).forEach(r=>{
-      const [eid,,b64]=r;if(!eid||!b64)return;
-      if(!photoMap[eid])photoMap[eid]=[];photoMap[eid].push(b64);
+  let nadd=0,nupd=0,ni_add=0,ni_upd=0;
+
+  // helper: merge新欄位進舊記錄，空白不覆蓋
+  const merge=(old,incoming)=>{
+    const out={...old};
+    for(const [k,v] of Object.entries(incoming)){
+      const isEmpty=v===''||v===null||v===undefined;
+      if(!isEmpty) out[k]=v; // 新的有值才覆蓋
+    }
+    return out;
+  };
+
+  if(wb.SheetNames.includes('裝備清單')){
+    const existing=await getAll('equip');
+    // 建索引：財產編號 → 記錄（有財產編號才建），name → 記錄（fallback）
+    const byAsset={};const byName={};
+    existing.forEach(r=>{
+      if(r.assetId) byAsset[r.assetId.trim()]=r;
+      byName[r.name.trim()]=r;
     });
+    for(const r of XLSX.utils.sheet_to_json(wb.Sheets['裝備清單'],{header:1}).slice(1)){
+      const [assetId,name,brand,model,system,location,note,stTxt]=r;
+      if(!name) continue;
+      const incoming={
+        assetId:assetId?String(assetId).trim():'',
+        name:String(name).trim(),
+        brand:brand?String(brand):'',
+        model:model?String(model):'',
+        system:system?String(system):'',
+        location:location?String(location):'',
+        note:note?String(note):'',
+        status:stTxt==='故障'?'ng':stTxt==='正常'?'ok':''
+      };
+      // 找舊記錄：優先財產編號比對，其次名稱
+      const key=incoming.assetId;
+      const old=key?byAsset[key]:byName[incoming.name];
+      if(old){
+        const updated=merge(old,incoming);
+        updated.id=old.id;
+        await putRec('equip',updated);nupd++;
+      } else {
+        const rec={...incoming,photos:[],createdAt:new Date().toISOString()};
+        if(!rec.status) rec.status='ok';
+        const newId=await addRec('equip',rec);
+        // 更新索引
+        if(rec.assetId) byAsset[rec.assetId]={...rec,id:newId};
+        byName[rec.name]={...rec,id:newId};
+        nadd++;
+      }
+    }
   }
-  let n=0;
-  for(const r of XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}).slice(1)){
-    const [assetId,instrIds,name,brand,model,system,scope,note,stTxt,,ca]=r;
-    if(!instrIds&&!name)continue;
-    await dbAdd({
-      assetId:String(assetId||''),instrIds:String(instrIds||''),
-      name:String(name||''),brand:brand||'',model:model||'',
-      system:system||'',scope:scope||'',note:note||'',
-      status:stTxt==='故障'?'ng':'ok',
-      photos:photoMap[String(instrIds||'')]||[],
-      createdAt:ca?new Date(String(ca)).toISOString():new Date().toISOString()
-    });n++;
+
+  if(wb.SheetNames.includes('儀校清單')){
+    const existing=await getAll('instr');
+    const byInstr={};
+    existing.forEach(r=>{if(r.instrId) byInstr[r.instrId.trim()]=r;});
+    for(const r of XLSX.utils.sheet_to_json(wb.Sheets['儀校清單'],{header:1}).slice(1)){
+      const [instrId,name,brand,model,location,medium,rMin,rMax,rUnit,note,,,stTxt,calExpiry,calPeriod]=r;
+      if(!instrId||!name) continue;
+      const rMinN=rMin!==''&&rMin!=null?Number(rMin):null;
+      const rMaxN=rMax!==''&&rMax!=null?Number(rMax):null;
+      const incoming={
+        instrId:String(instrId).trim(),
+        name:String(name).trim(),
+        brand:brand?String(brand):'',
+        model:model?String(model):'',
+        location:location?String(location):'',
+        medium:medium?String(medium):'',
+        rangeMin:rMinN,rangeMax:rMaxN,
+        rangeUnit:rUnit?String(rUnit):'',
+        note:note?String(note):'',
+        status:stTxt==='故障'?'ng':stTxt==='正常'?'ok':'',
+        calExpiry:calExpiry?String(calExpiry):'',
+        calPeriod:calPeriod?parseInt(calPeriod):0
+      };
+      const old=byInstr[incoming.instrId];
+      if(old){
+        // rangeMin/rangeMax 特殊處理：null 也算空白，不覆蓋
+        const updated=merge(old,incoming);
+        if(rMinN===null) updated.rangeMin=old.rangeMin;
+        if(rMaxN===null) updated.rangeMax=old.rangeMax;
+        if(!incoming.calPeriod) updated.calPeriod=old.calPeriod;
+        updated.id=old.id;
+        await putRec('instr',updated);ni_upd++;
+      } else {
+        const rec={...incoming,linkedEquipId:null,photos:[],createdAt:new Date().toISOString()};
+        if(!rec.status) rec.status='ok';
+        const newId=await addRec('instr',rec);
+        byInstr[rec.instrId]={...rec,id:newId};
+        ni_add++;
+      }
+    }
   }
-  inp.value='';toast(`✅ 已匯入 ${n} 筆記錄`);renderList();
+
+  inp.value='';
+  const msg=`✅ 裝備：新增${nadd} 更新${nupd}｜儀校：新增${ni_add} 更新${ni_upd}`;
+  toast(msg);renderEquip();renderInstr();
 }
 
 async function exportJSON(){
-  const all=await dbAll();
+  const eqs=await getAll('equip');const ins=await getAll('instr');
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(all,null,2)],{type:'application/json'}));
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({equip:eqs,instr:ins},null,2)],{type:'application/json'}));
   a.download=`eq_backup_${new Date().toISOString().slice(0,10)}.json`;
   a.click();toast('已備份 JSON（含照片）');
 }
 async function handleJSONImport(inp){
   const f=inp.files[0];if(!f)return;
   try{
-    const arr=JSON.parse(await f.text());let n=0;
-    for(const r of arr){const{id,...rest}=r;await dbAdd(rest);n++}
-    toast(`✅ 已還原 ${n} 筆記錄`);renderList();
+    const data=JSON.parse(await f.text());let ne=0,ni=0;
+    for(const r of(data.equip||[])){const{id,...rest}=r;await addRec('equip',rest);ne++}
+    for(const r of(data.instr||[])){const{id,...rest}=r;await addRec('instr',rest);ni++}
+    toast(`✅ 還原裝備${ne}筆、儀校${ni}筆`);renderEquip();renderInstr();
   }catch{toast('JSON 格式錯誤','err')}
   inp.value='';
 }
@@ -777,10 +1312,10 @@ async function handleJSONImport(inp){
 function toast(msg,type=''){
   const t=document.getElementById('toast');
   t.textContent=msg;t.className='toast show'+(type?' '+type:'');
-  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-openDB();
+openDB().then(()=>renderEquip());
 </script>
 </body>
 </html>

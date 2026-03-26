@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>裝備記錄 — 後台管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f5f0eb;
+  --sur:#faf7f4;
+  --card:#ffffff;
+  --brd:#e2d9d0;
+  --brd2:#ccc2b8;
+  --acc:#5c8a6e;        /* 柔和森林綠 */
+  --acc-light:#e8f2ec;
+  --acc2:#6b7fa8;       /* 柔和靛藍 */
+  --acc2-light:#eaeef5;
+  --ng:#b85c5c;         /* 柔和磚紅 */
+  --ng-light:#f5e8e8;
+  --warn:#a07840;       /* 柔和焦糖 */
+  --warn-light:#f5eee0;
+  --purple:#7a68a0;     /* 柔和紫 */
+  --purple-light:#eeeaf5;
+  --txt:#3a3028;        /* 深棕文字 */
+  --txt2:#7a6e64;       /* 中棕 */
+  --txt3:#b0a89e;       /* 淺棕 */
+  --row-hover:#f0ebe5;
+  --row-sel:#e8f2ec;
+  --row-edit:#eaf5ee;
+  --head:#ede8e2;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Noto Sans TC',sans-serif;
+  font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--sur);border-bottom:1px solid var(--brd);box-shadow:var(--shadow);
+  padding:0 20px;height:52px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:20;position:relative}
+.topbar-logo{font-size:14px;font-weight:700;color:var(--txt);margin-right:6px}
+.topbar-logo span{color:var(--acc)}
+.topbar-logo small{font-size:11px;color:var(--txt2);font-weight:400;margin-left:6px;
+  background:var(--acc-light);color:var(--acc);padding:2px 8px;border-radius:20px}
+.tab-btn{padding:6px 16px;border-radius:20px;border:1.5px solid transparent;
+  font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;
+  color:var(--txt2);background:none;transition:all .15s}
+.tab-btn:hover{background:var(--row-hover)}
+.tab-btn.active{background:var(--acc-light);border-color:var(--acc);color:var(--acc);font-weight:700}
+.topbar-sep{width:1px;height:22px;background:var(--brd);margin:0 2px}
+.spacer{flex:1}
+.btn{padding:6px 14px;border-radius:8px;border:1px solid var(--brd);
+  font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif;
+  color:var(--txt2);background:var(--card);transition:all .15s;white-space:nowrap;box-shadow:var(--shadow)}
+.btn:hover{border-color:var(--brd2);color:var(--txt)}
+.btn.primary{background:var(--acc-light);border-color:var(--acc);color:var(--acc)}
+.btn.primary:hover{background:#d8ede3}
+.btn.danger{background:var(--ng-light);border-color:var(--ng);color:var(--ng)}
+.btn.danger:hover{background:#eed8d8}
+.btn.blue{background:var(--acc2-light);border-color:var(--acc2);color:var(--acc2)}
+.btn.blue:hover{background:#dde3f0}
+.btn.save{background:#e8f5e8;border-color:var(--acc);color:var(--acc);font-weight:700}
+.btn:disabled{opacity:.38;cursor:not-allowed;box-shadow:none}
+
+/* ── FILTER BAR ── */
+.filterbar{background:var(--sur);border-bottom:1px solid var(--brd);
+  padding:8px 20px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.search-input{background:var(--card);border:1.5px solid var(--brd);border-radius:8px;
+  color:var(--txt);font-family:'Noto Sans TC',sans-serif;font-size:13px;
+  padding:5px 11px;outline:none;width:200px;transition:border-color .15s;box-shadow:var(--shadow)}
+.search-input:focus{border-color:var(--acc)}
+.filter-select{background:var(--card);border:1.5px solid var(--brd);border-radius:8px;
+  color:var(--txt);font-family:'Noto Sans TC',sans-serif;font-size:12px;
+  padding:5px 9px;outline:none;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s}
+.filter-select:focus{border-color:var(--acc)}
+.filter-select option{background:var(--card);color:var(--txt)}
+.filter-label{font-size:11px;color:var(--txt2);white-space:nowrap;font-weight:500}
+.result-count{font-size:11px;color:var(--txt2);margin-left:auto;
+  background:var(--head);padding:3px 10px;border-radius:20px}
+
+/* ── TABLE ── */
+.table-wrap{flex:1;overflow:auto;position:relative}
+table{border-collapse:collapse;width:max-content;min-width:100%}
+thead{position:sticky;top:0;z-index:10}
+thead th{background:var(--head);border-bottom:2px solid var(--brd2);border-right:1px solid var(--brd);
+  padding:8px 12px;text-align:left;font-size:11px;font-weight:700;
+  color:var(--txt2);white-space:nowrap;user-select:none;
+  letter-spacing:.5px;text-transform:uppercase}
+thead th:first-child{width:44px;text-align:center}
+thead th.sortable{cursor:pointer}
+thead th.sortable:hover{color:var(--txt);background:#e5dfd8}
+thead th.asc .si::after{content:' ↑';color:var(--acc)}
+thead th.desc .si::after{content:' ↓';color:var(--acc)}
+thead th:not(.asc):not(.desc) .si::after{content:' ↕';opacity:.3}
+
+tbody tr{border-bottom:1px solid var(--brd);transition:background .1s}
+tbody tr:hover{background:var(--row-hover)}
+tbody tr.selected{background:var(--row-sel)}
+tbody tr.editing{background:var(--row-edit)}
+tbody tr.new-row-hint{background:#fefdf8}
+
+tbody td{border-right:1px solid var(--brd);padding:0;vertical-align:middle;
+  white-space:nowrap;max-width:280px}
+tbody td:first-child{text-align:center;padding:0 10px;width:44px}
+
+.cb{width:15px;height:15px;accent-color:var(--acc);cursor:pointer}
+
+.cell-val{padding:6px 12px;display:block;overflow:hidden;text-overflow:ellipsis;
+  cursor:text;min-height:34px;line-height:22px;color:var(--txt)}
+.cell-val:hover{background:rgba(0,0,0,.03);border-radius:3px}
+.cell-val.mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--txt2)}
+.cell-val.muted{color:var(--txt3)}
+.cell-val.linked{color:var(--acc2);font-size:12px}
+
+/* inline edit */
+.cell-input{width:100%;background:#fff;border:2px solid var(--acc2);
+  border-radius:0;color:var(--txt);font-family:'Noto Sans TC',sans-serif;font-size:13px;
+  padding:5px 10px;outline:none;height:34px}
+.cell-input.mono{font-family:'JetBrains Mono',monospace;font-size:11.5px}
+select.cell-input{cursor:pointer}
+
+/* linked asset popup */
+.asset-popup{position:absolute;background:var(--card);border:1.5px solid var(--acc2);
+  border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:100;
+  min-width:280px;max-height:200px;overflow-y:auto;display:none}
+.asset-popup.open{display:block}
+.asset-popup-search{width:100%;border:none;border-bottom:1px solid var(--brd);
+  padding:8px 12px;font-family:'Noto Sans TC',sans-serif;font-size:13px;
+  color:var(--txt);background:var(--sur);outline:none;border-radius:6px 6px 0 0}
+.asset-opt{padding:8px 12px;cursor:pointer;transition:background .1s;font-size:13px}
+.asset-opt:hover{background:var(--acc-light)}
+.asset-opt .opt-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--warn);margin-bottom:1px}
+.asset-opt .opt-name{color:var(--txt)}
+.asset-opt.none-opt{color:var(--txt3);font-style:italic}
+
+/* badges */
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
+.badge.ok{background:var(--acc-light);color:var(--acc);border:1px solid #b8d8c4}
+.badge.ng{background:var(--ng-light);color:var(--ng);border:1px solid #e0b8b8}
+.badge.valid{background:var(--acc2-light);color:var(--acc2);border:1px solid #bec8dc}
+.badge.soon{background:var(--warn-light);color:var(--warn);border:1px solid #d4b880}
+.badge.expire{background:var(--ng-light);color:var(--ng);border:1px solid #e0b8b8}
+.badge.sys{background:var(--acc2-light);color:var(--acc2);border:1px solid #bec8dc;font-size:10px}
+.badge.loc{background:var(--warn-light);color:var(--warn);border:1px solid #d4b880;font-size:10px}
+.badge.med{background:var(--purple-light);color:var(--purple);border:1px solid #c4b8d8;font-size:10px}
+
+/* new row panel */
+.new-row-form{position:fixed;bottom:0;left:0;right:0;background:var(--sur);
+  border-top:2px solid var(--acc);box-shadow:0 -4px 16px rgba(0,0,0,.08);
+  padding:12px 20px;display:none;align-items:flex-end;gap:10px;flex-wrap:wrap;z-index:50}
+.new-row-form.open{display:flex}
+.nf-group{display:flex;flex-direction:column;gap:3px}
+.nf-label{font-size:10px;color:var(--txt2);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.nf-input{background:var(--card);border:1.5px solid var(--brd);border-radius:6px;
+  color:var(--txt);font-family:'Noto Sans TC',sans-serif;font-size:12px;
+  padding:5px 9px;outline:none;transition:border-color .15s}
+.nf-input:focus{border-color:var(--acc)}
+select.nf-input{cursor:pointer}
+
+/* status bar */
+.statusbar{background:var(--sur);border-top:1px solid var(--brd);
+  padding:4px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0;height:28px}
+.statusbar span{font-size:11px;color:var(--txt2)}
+.statusbar .dot{width:7px;height:7px;border-radius:50%;background:var(--acc);
+  display:inline-block;margin-right:4px;vertical-align:middle}
+
+/* toast */
+.toast{position:fixed;top:18px;right:20px;
+  font-weight:700;padding:10px 18px;border-radius:8px;font-size:13px;
+  z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast.show{opacity:1}
+.toast.ok{background:var(--acc-light);color:var(--acc);border:1px solid #b8d8c4}
+.toast.err{background:var(--ng-light);color:var(--ng);border:1px solid #e0b8b8}
+.toast.info{background:var(--acc2-light);color:var(--acc2);border:1px solid #bec8dc}
+
+/* confirm modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(58,48,40,.35);backdrop-filter:blur(2px);
+  z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--brd);border-radius:12px;
+  padding:28px;min-width:380px;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.modal h3{font-size:15px;font-weight:700;color:var(--txt);margin-bottom:12px}
+.modal p{color:var(--txt2);font-size:13px;line-height:1.7}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:22px}
+
+input[type=file]{display:none}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--txt3)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">⚙️ 裝備記錄<span> 後台</span><small>Admin</small></div>
+  <div class="topbar-sep"></div>
+  <button class="tab-btn active" id="tab-equip" onclick="switchTab('equip')">🔧 裝備清單</button>
+  <button class="tab-btn" id="tab-instr" onclick="switchTab('instr')">📐 儀校清單</button>
+  <div class="spacer"></div>
+  <button class="btn blue" onclick="document.getElementById('xlsxInput').click()">⬆ 匯入 Excel</button>
+  <button class="btn" onclick="document.getElementById('jsonInput').click()">⬆ 匯入 JSON</button>
+  <button class="btn primary" onclick="exportExcel()">⬇ 匯出 Excel</button>
+  <button class="btn" onclick="exportJSON()">⬇ 匯出 JSON</button>
+  <div class="topbar-sep"></div>
+  <button class="btn" id="btn-add" onclick="openNewRow()">＋ 新增列</button>
+  <button class="btn danger" id="btn-del" onclick="deleteSelected()" disabled>🗑 刪除選取</button>
+  <button class="btn save" id="btn-save" onclick="saveAllEdits()" style="display:none">💾 儲存變更</button>
+</div>
+
+<div class="filterbar" id="filterbar">
+  <span class="filter-label">搜尋</span>
+  <input class="search-input" id="searchInput" type="text" placeholder="編號、名稱、廠牌…" oninput="applyFilters()">
+  <div class="topbar-sep"></div>
+  <span class="filter-label" id="f1-label">系統別</span>
+  <select class="filter-select" id="filter1" onchange="applyFilters()"><option value="">全部</option></select>
+  <span class="filter-label" id="f2-label">位置</span>
+  <select class="filter-select" id="filter2" onchange="applyFilters()"><option value="">全部</option></select>
+  <span class="filter-label">狀態</span>
+  <select class="filter-select" id="filter3" onchange="applyFilters()">
+    <option value="">全部</option><option value="ok">正常</option><option value="ng">故障</option>
+  </select>
+  <div id="filter4-wrap" style="display:none;align-items:center;gap:8px">
+    <span class="filter-label">校驗狀態</span>
+    <select class="filter-select" id="filter4" onchange="applyFilters()">
+      <option value="">全部</option>
+      <option value="valid">✓ 有效</option>
+      <option value="soon">⏰ 即將到期</option>
+      <option value="expire">✗ 逾期</option>
+      <option value="none">— 未設定</option>
+    </select>
+  </div>
+  <button class="btn" onclick="clearFilters()" style="font-size:11px;padding:4px 10px">✕ 清除</button>
+  <span class="result-count" id="resultCount"></span>
+</div>
+
+<div class="table-wrap" id="tableWrap"></div>
+
+<div class="statusbar">
+  <span><span class="dot"></span>同瀏覽器共用 IndexedDB</span>
+  <span id="sb-equip">裝備：—</span>
+  <span id="sb-instr">儀校：—</span>
+  <span id="sb-sel" style="color:var(--acc);font-weight:700;display:none"></span>
+  <span style="margin-left:auto;color:var(--txt3)">雙擊儲存格編輯 · Tab 移動 · Ctrl+S 儲存</span>
+</div>
+
+<div class="new-row-form" id="newRowForm"></div>
+
+<!-- asset link popup -->
+<div class="asset-popup" id="assetPopup">
+  <input class="asset-popup-search" id="assetPopupSearch" type="text" placeholder="搜尋裝備名稱或財產編號…" oninput="filterAssetPopup()">
+  <div id="assetPopupList"></div>
+</div>
+
+<input type="file" id="xlsxInput" accept=".xlsx,.xls" onchange="importExcel(this)">
+<input type="file" id="jsonInput" accept=".json" onchange="importJSON(this)">
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle"></h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeConfirm()">取消</button>
+      <button class="btn danger" id="confirmOk">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SYSTEMS=['航電/飛操','液壓','燃油','環控/氧氣','起落架','武器'];
+const LOCATIONS=['17/18','17棚庫房','35/36','37/38','23'];
+const MEDIUMS=['液壓','燃油','氣體','不適用'];
+const CAL_LABEL={valid:'✓ 有效',expire:'✗ 逾期',soon:'⏰ 即將到期',none:'— 未設定'};
+
+function calStatusFromDate(d,p){
+  if(!d) return 'none';
+  const diff=(new Date(d)-new Date())/864e5;
+  if(diff<0) return 'expire';
+  return diff<=( p?Math.round(p/3):30)?'soon':'valid';
+}
+
+// ── DB ────────────────────────────────────────────────────
+let DB;
+function openDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open('EqDB5',1);
+  r.onupgradeneeded=e=>{
+    const db=e.target.result;
+    if(!db.objectStoreNames.contains('equip')) db.createObjectStore('equip',{keyPath:'id',autoIncrement:true});
+    if(!db.objectStoreNames.contains('instr')) db.createObjectStore('instr',{keyPath:'id',autoIncrement:true});
+  };
+  r.onsuccess=e=>{DB=e.target.result;res()};r.onerror=rej;
+})}
+const store=(n,m='readonly')=>DB.transaction(n,m).objectStore(n);
+const getAll=n=>new Promise(r=>{store(n).getAll().onsuccess=e=>r(e.target.result)});
+const putRec=(n,d)=>new Promise(r=>{store(n,'readwrite').put(d).onsuccess=r});
+const addRec=(n,d)=>new Promise(r=>{store(n,'readwrite').add(d).onsuccess=e=>r(e.target.result)});
+const delRec=(n,id)=>new Promise(r=>{store(n,'readwrite').delete(id).onsuccess=r});
+
+// ── STATE ─────────────────────────────────────────────────
+let curTab='equip';
+let allData=[], filteredData=[], allEquip=[];
+let sortCol=null, sortDir=1;
+let pendingEdits={};
+let selectedIds=new Set();
+let activeEdit=null;
+// asset popup state
+let assetPopupTarget=null; // {id, td}
+
+// ── COLUMNS ───────────────────────────────────────────────
+const EQUIP_COLS=[
+  {key:'assetId',  label:'財產編號', w:130, mono:true,  editable:true},
+  {key:'name',     label:'裝備名稱', w:180, editable:true, required:true},
+  {key:'brand',    label:'廠牌',     w:110, editable:true},
+  {key:'model',    label:'型號',     w:130, editable:true},
+  {key:'system',   label:'系統別',   w:110, editable:true, type:'select', options:SYSTEMS},
+  {key:'location', label:'存放位置', w:110, editable:true, type:'select', options:LOCATIONS},
+  {key:'note',     label:'備註',     w:200, editable:true},
+  {key:'status',   label:'使用情況', w:90,  editable:true, type:'select', options:['ok','ng'],
+   render:v=>`<span class="badge ${v}">${v==='ok'?'正常':'故障'}</span>`},
+];
+
+const INSTR_COLS=[
+  {key:'instrId',        label:'儀校編號',   w:120, mono:true, editable:true, required:true},
+  {key:'name',           label:'儀具名稱',   w:160, editable:true, required:true},
+  {key:'brand',          label:'廠牌',       w:100, editable:true},
+  {key:'model',          label:'型號',       w:120, editable:true},
+  {key:'location',       label:'地點',       w:100, editable:true, type:'select', options:LOCATIONS},
+  {key:'medium',         label:'介質',       w:80,  editable:true, type:'select', options:MEDIUMS},
+  {key:'rangeMin',       label:'量測最小',   w:80,  editable:true, type:'number'},
+  {key:'rangeMax',       label:'量測最大',   w:80,  editable:true, type:'number'},
+  {key:'rangeUnit',      label:'單位',       w:70,  editable:true},
+  {key:'status',         label:'儀器狀態',   w:90,  editable:true, type:'select', options:['ok','ng'],
+   render:v=>`<span class="badge ${v}">${v==='ok'?'正常':'故障'}</span>`},
+  {key:'calExpiry',      label:'校驗截止日', w:115, editable:true, type:'date',
+   render:v=>{if(!v)return'';const d=new Date(v);if(isNaN(d))return escH(v);return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;}},
+  {key:'calPeriod',      label:'週期(天)',   w:80,  editable:true, type:'number'},
+  {key:'_calStatus',     label:'校驗狀態',   w:110, editable:false,
+   render:(v,row)=>{const s=calStatusFromDate(row.calExpiry,row.calPeriod);
+     return s!=='none'?`<span class="badge ${s}">${CAL_LABEL[s]}</span>`:'<span style="color:var(--txt3)">—</span>';}},
+  {key:'_linkedEquip',   label:'連結裝備',   w:200, editable:false, special:'linkedEquip'},
+  {key:'note',           label:'備註',       w:200, editable:true},
+];
+
+function getCols(){return curTab==='equip'?EQUIP_COLS:INSTR_COLS;}
+function getStore(){return curTab==='equip'?'equip':'instr';}
+
+// ── TAB ───────────────────────────────────────────────────
+async function switchTab(t){
+  curTab=t;pendingEdits={};selectedIds=new Set();
+  closeAssetPopup();closeNewRow();
+  document.getElementById('tab-equip').classList.toggle('active',t==='equip');
+  document.getElementById('tab-instr').classList.toggle('active',t==='instr');
+  document.getElementById('filter4-wrap').style.display=t==='instr'?'flex':'none';
+  setupFilters();
+  await loadData();
+}
+
+// ── FILTER SETUP ──────────────────────────────────────────
+function setupFilters(){
+  if(curTab==='equip'){
+    document.getElementById('f1-label').textContent='系統別';
+    document.getElementById('f2-label').textContent='存放位置';
+    setOpts('filter1',SYSTEMS);setOpts('filter2',LOCATIONS);
+  } else {
+    document.getElementById('f1-label').textContent='地點';
+    document.getElementById('f2-label').textContent='介質';
+    setOpts('filter1',LOCATIONS);setOpts('filter2',MEDIUMS);
+  }
+}
+function setOpts(id,arr){
+  document.getElementById(id).innerHTML=`<option value="">全部</option>`+arr.map(o=>`<option value="${o}">${o}</option>`).join('');
+}
+function clearFilters(){
+  document.getElementById('searchInput').value='';
+  ['filter1','filter2','filter3','filter4'].forEach(id=>document.getElementById(id).value='');
+  applyFilters();
+}
+
+// ── DATA ──────────────────────────────────────────────────
+async function loadData(){
+  allEquip=await getAll('equip');
+  allData=await getAll(getStore());
+  applyFilters();updateStatusBar();
+}
+
+function applyFilters(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const f1=document.getElementById('filter1').value;
+  const f2=document.getElementById('filter2').value;
+  const f3=document.getElementById('filter3').value;
+  const f4=document.getElementById('filter4').value;
+  filteredData=allData.filter(r=>{
+    const sf=curTab==='equip'?[r.assetId,r.name,r.brand,r.model,r.note]:[r.instrId,r.name,r.brand,r.model,r.note];
+    const hit=!q||sf.join(' ').toLowerCase().includes(q);
+    const s1=!f1||(curTab==='equip'?r.system:r.location)===f1;
+    const s2=!f2||(curTab==='equip'?r.location:r.medium)===f2;
+    const s3=!f3||r.status===f3;
+    const s4=!f4||calStatusFromDate(r.calExpiry,r.calPeriod)===f4;
+    return hit&&s1&&s2&&s3&&s4;
+  });
+  if(sortCol) filteredData.sort((a,b)=>String(a[sortCol]??'').localeCompare(String(b[sortCol]??''),undefined,{numeric:true})*sortDir);
+  document.getElementById('resultCount').textContent=`${filteredData.length} / ${allData.length} 筆`;
+  renderTable();
+}
+
+// ── TABLE RENDER ──────────────────────────────────────────
+function renderTable(){
+  const cols=getCols();
+  const head=`<thead><tr>
+    <th><input type="checkbox" class="cb" id="cb-all" onchange="toggleAll(this)"></th>
+    ${cols.map(c=>`<th class="sortable${sortCol===c.key?' '+(sortDir===1?'asc':'desc'):''}"
+      style="min-width:${c.w}px" onclick="doSort('${c.key}')">
+      ${c.label}<span class="si"></span></th>`).join('')}
+  </tr></thead>`;
+  const rows=filteredData.map(r=>renderRow(r,cols)).join('');
+  document.getElementById('tableWrap').innerHTML=`<table>${head}<tbody id="tbody">${rows}</tbody></table>`;
+  syncSelUI();
+  // attach dblclick after render
+  attachEvents();
+}
+
+function attachEvents(){
+  const cols=getCols();
+  filteredData.forEach(r=>{
+    const row=document.getElementById('row-'+r.id);if(!row)return;
+    const tds=row.querySelectorAll('td');
+    cols.forEach((col,i)=>{
+      const td=tds[i+1];if(!td)return;
+      if(col.special==='linkedEquip'){
+        td.ondblclick=()=>openAssetPopup(r.id,td);
+      } else if(col.editable){
+        td.ondblclick=(e)=>startEdit(r.id,col.key,td,e);
+      }
+    });
+  });
+}
+
+function renderRow(r,cols){
+  const sel=selectedIds.has(r.id);
+  const edits=pendingEdits[r.id]||{};
+  const isEditing=Object.keys(edits).length>0;
+  return `<tr id="row-${r.id}" class="${sel?'selected':''} ${isEditing?'editing':''}">
+    <td><input type="checkbox" class="cb" ${sel?'checked':''} onchange="toggleRow(${r.id},this)"></td>
+    ${cols.map(c=>renderCell(r,c,edits)).join('')}
+  </tr>`;
+}
+
+function renderCell(r,col,edits){
+  // special: linked equip
+  if(col.special==='linkedEquip'){
+    const pendingEqId=edits['_linkedEquipId'];
+    const eqId=pendingEqId!==undefined?pendingEqId:r.linkedEquipId;
+    const eq=eqId?allEquip.find(e=>e.id===eqId):null;
+    const disp=eq
+      ?`<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--warn)">${escH(eq.assetId||'—')}</span> <span style="color:var(--txt)">${escH(eq.name)}</span>`
+      :`<span style="color:var(--txt3);font-style:italic">未連結（雙擊設定）</span>`;
+    return `<td><span class="cell-val linked">${disp}</span></td>`;
+  }
+  // computed
+  if(!col.editable){
+    const val=r[col.key];
+    const disp=col.render?col.render(val,r):escH(val??'');
+    return `<td><span class="cell-val muted">${disp}</span></td>`;
+  }
+  const raw=r[col.key];
+  const editVal=edits[col.key];
+  const val=editVal!==undefined?editVal:raw;
+  const display=col.render?col.render(val,r):escH(val??'');
+  const mono=col.mono?'mono':'';
+  const isEmpty=val===''||val===null||val===undefined;
+  return `<td><span class="cell-val ${mono} ${isEmpty?'muted':''}">${display||'<span style="color:var(--txt3)">—</span>'}</span></td>`;
+}
+
+// ── INLINE EDIT ───────────────────────────────────────────
+function startEdit(id,key,td,e){
+  if(activeEdit) commitEdit();
+  closeAssetPopup();
+  const col=getCols().find(c=>c.key===key);
+  if(!col||!col.editable) return;
+  const r=allData.find(x=>x.id===id);
+  const editVal=(pendingEdits[id]||{})[key];
+  const val=editVal!==undefined?editVal:(r[key]??'');
+
+  let input;
+  if(col.type==='select'){
+    const opts=col.options.map(o=>`<option value="${o}" ${String(val)===String(o)?'selected':''}>${col.key==='status'?(o==='ok'?'正常':'故障'):o}</option>`).join('');
+    input=`<select class="cell-input" id="ae"><option value="">—</option>${opts}</select>`;
+  } else if(col.type==='date'){
+    input=`<input type="date" class="cell-input" id="ae" value="${val}" style="width:${col.w}px">`;
+  } else if(col.type==='number'){
+    input=`<input type="number" class="cell-input ${col.mono?'mono':''}" id="ae" value="${val}" style="width:${col.w}px" step="any">`;
+  } else {
+    input=`<input type="text" class="cell-input ${col.mono?'mono':''}" id="ae" value="${escAttr(String(val))}" style="width:${col.w}px">`;
+  }
+  td.innerHTML=input;
+  activeEdit={id,key,td,original:val};
+  const el=document.getElementById('ae');
+  el.focus();if(el.select) el.select();
+  el.addEventListener('blur',()=>setTimeout(commitEdit,100));
+  el.addEventListener('keydown',ev=>{
+    if(ev.key==='Enter'){ev.preventDefault();commitEdit();moveDown(id,key);}
+    else if(ev.key==='Tab'){ev.preventDefault();commitEdit();moveRight(id,key,ev.shiftKey);}
+    else if(ev.key==='Escape'){cancelEdit();}
+  });
+}
+
+function commitEdit(){
+  if(!activeEdit) return;
+  const {id,key,td}=activeEdit;activeEdit=null;
+  const el=document.getElementById('ae');
+  if(!el){reRenderRow(id);return;}
+  const v=el.value;
+  if(!pendingEdits[id]) pendingEdits[id]={};
+  pendingEdits[id][key]=v;
+  document.getElementById('btn-save').style.display='inline-block';
+  reRenderRow(id);
+}
+function cancelEdit(){
+  if(!activeEdit)return;
+  const {id}=activeEdit;activeEdit=null;reRenderRow(id);
+}
+
+function reRenderRow(id){
+  const r=allData.find(x=>x.id===id);if(!r)return;
+  const cols=getCols();const edits=pendingEdits[id]||{};
+  const isEditing=Object.keys(edits).length>0;
+  const sel=selectedIds.has(id);
+  const row=document.getElementById('row-'+id);if(!row)return;
+  row.className=`${sel?'selected':''} ${isEditing?'editing':''}`;
+  const tds=row.querySelectorAll('td');
+  cols.forEach((col,i)=>{
+    const td=tds[i+1];if(!td)return;
+    td.outerHTML=renderCell(r,col,edits);
+  });
+  // re-attach events for this row
+  const newRow=document.getElementById('row-'+id);
+  const newTds=newRow.querySelectorAll('td');
+  cols.forEach((col,i)=>{
+    const td=newTds[i+1];if(!td)return;
+    if(col.special==='linkedEquip') td.ondblclick=()=>openAssetPopup(id,td);
+    else if(col.editable) td.ondblclick=(e)=>startEdit(id,col.key,td,e);
+  });
+}
+
+function moveDown(id,key){
+  const idx=filteredData.findIndex(r=>r.id===id);
+  if(idx<filteredData.length-1){
+    const nid=filteredData[idx+1].id;
+    const ci=getCols().findIndex(c=>c.key===key);
+    const tds=document.getElementById('row-'+nid)?.querySelectorAll('td');
+    if(tds&&tds[ci+1]) startEdit(nid,key,tds[ci+1],null);
+  }
+}
+function moveRight(id,key,back){
+  const editables=getCols().filter(c=>c.editable);
+  const ci=editables.findIndex(c=>c.key===key);
+  const next=back?editables[ci-1]:editables[ci+1];
+  if(!next)return;
+  const allCols=getCols();
+  const ti=allCols.findIndex(c=>c.key===next.key);
+  const tds=document.getElementById('row-'+id)?.querySelectorAll('td');
+  if(tds&&tds[ti+1]) startEdit(id,next.key,tds[ti+1],null);
+}
+
+// ── ASSET POPUP (連結裝備) ────────────────────────────────
+function openAssetPopup(instrId,td){
+  if(activeEdit) commitEdit();
+  assetPopupTarget={id:instrId,td};
+  const popup=document.getElementById('assetPopup');
+  const rect=td.getBoundingClientRect();
+  const wrap=document.getElementById('tableWrap');
+  popup.style.top=(rect.bottom+wrap.scrollTop-wrap.getBoundingClientRect().top+2)+'px';
+  popup.style.left=(rect.left+wrap.scrollLeft-wrap.getBoundingClientRect().left)+'px';
+  // position relative to table wrap
+  wrap.style.position='relative';
+  wrap.appendChild(popup);
+  document.getElementById('assetPopupSearch').value='';
+  filterAssetPopup();
+  popup.classList.add('open');
+  document.getElementById('assetPopupSearch').focus();
+}
+
+function filterAssetPopup(){
+  const q=document.getElementById('assetPopupSearch').value.toLowerCase();
+  const list=document.getElementById('assetPopupList');
+  const hits=allEquip.filter(e=>[e.assetId,e.name].join(' ').toLowerCase().includes(q)).slice(0,10);
+  list.innerHTML=`<div class="asset-opt none-opt" onclick="selectAssetLink(null)">✕ 清除連結</div>`
+    +hits.map(e=>`<div class="asset-opt" onclick="selectAssetLink(${e.id})">
+      <div class="opt-id">${escH(e.assetId||'（無財產編號）')}</div>
+      <div class="opt-name">${escH(e.name)}</div>
+    </div>`).join('');
+}
+
+function selectAssetLink(equipId){
+  if(!assetPopupTarget) return;
+  const {id}=assetPopupTarget;
+  if(!pendingEdits[id]) pendingEdits[id]={};
+  pendingEdits[id]['_linkedEquipId']=equipId; // store as pending
+  pendingEdits[id]['linkedEquipId']=equipId;  // actual field
+  document.getElementById('btn-save').style.display='inline-block';
+  closeAssetPopup();
+  reRenderRow(id);
+}
+
+function closeAssetPopup(){
+  document.getElementById('assetPopup').classList.remove('open');
+  assetPopupTarget=null;
+}
+
+// ── SAVE ──────────────────────────────────────────────────
+async function saveAllEdits(){
+  const ids=Object.keys(pendingEdits);
+  if(!ids.length){toast('沒有待儲存的變更','info');return;}
+  for(const id of ids){
+    const idn=parseInt(id);
+    const r=allData.find(x=>x.id===idn);if(!r)continue;
+    const edits=pendingEdits[id];
+    const updated={...r};
+    for(const [k,v] of Object.entries(edits)){
+      if(k==='_linkedEquipId') continue; // internal key
+      if(v===''||v===null||v===undefined) continue;
+      const col=getCols().find(c=>c.key===k);
+      if(col?.type==='number') updated[k]=v===''?null:Number(v);
+      else updated[k]=v;
+    }
+    // handle linkedEquipId (allow null to clear)
+    if('linkedEquipId' in edits) updated.linkedEquipId=edits.linkedEquipId;
+    await putRec(getStore(),updated);
+  }
+  const n=ids.length;
+  pendingEdits={};
+  document.getElementById('btn-save').style.display='none';
+  await loadData();
+  toast(`✅ 已儲存 ${n} 列`,'ok');
+}
+
+// ── SELECT ────────────────────────────────────────────────
+function toggleAll(cb){
+  filteredData.forEach(r=>cb.checked?selectedIds.add(r.id):selectedIds.delete(r.id));
+  syncSelUI();renderTable();
+}
+function toggleRow(id,cb){
+  cb.checked?selectedIds.add(id):selectedIds.delete(id);
+  syncSelUI();
+  document.getElementById('row-'+id)?.classList.toggle('selected',cb.checked);
+}
+function syncSelUI(){
+  const n=selectedIds.size;
+  document.getElementById('btn-del').disabled=n===0;
+  const sb=document.getElementById('sb-sel');
+  sb.style.display=n?'inline':'none';
+  sb.textContent=`已選取 ${n} 列`;
+}
+
+// ── NEW ROW ───────────────────────────────────────────────
+function openNewRow(){
+  const form=document.getElementById('newRowForm');
+  const cols=getCols().filter(c=>c.editable);
+  form.innerHTML=`
+    <span style="font-size:12px;font-weight:700;color:var(--acc);white-space:nowrap;align-self:flex-end;padding-bottom:2px">新增列</span>
+    ${cols.map(c=>`<div class="nf-group">
+      <span class="nf-label">${c.label}${c.required?' *':''}</span>
+      ${c.type==='select'
+        ?`<select class="nf-input" id="nf-${c.key}" style="width:${Math.min(c.w,130)}px">
+            <option value="">—</option>
+            ${c.options.map(o=>`<option value="${o}">${c.key==='status'?(o==='ok'?'正常':'故障'):o}</option>`).join('')}
+          </select>`
+        :`<input type="${c.type||'text'}" id="nf-${c.key}" class="nf-input ${c.mono?'mono':''}"
+            style="width:${Math.min(c.w,130)}px" placeholder="${c.required?'必填':'選填'}" step="${c.type==='number'?'any':''}">`
+      }
+    </div>`).join('')}
+    <div class="nf-group" style="align-self:flex-end;gap:6px;flex-direction:row">
+      <button class="btn primary" onclick="saveNewRow()">新增</button>
+      <button class="btn" onclick="closeNewRow()">取消</button>
+    </div>
+  `;
+  form.classList.add('open');
+  form.querySelector('input,select')?.focus();
+}
+
+async function saveNewRow(){
+  const cols=getCols().filter(c=>c.editable);
+  const rec={photos:[],createdAt:new Date().toISOString()};
+  for(const c of cols){
+    const el=document.getElementById('nf-'+c.key);if(!el)continue;
+    const val=el.value;
+    if(c.required&&!val){toast(`請填寫「${c.label}」`,'err');el.focus();return;}
+    rec[c.key]=c.type==='number'?(val===''?null:Number(val)):val;
+  }
+  if(!rec.status) rec.status='ok';
+  if(curTab==='instr') rec.linkedEquipId=null;
+  await addRec(getStore(),rec);
+  closeNewRow();await loadData();toast('✅ 已新增','ok');
+}
+function closeNewRow(){document.getElementById('newRowForm').classList.remove('open')}
+
+// ── DELETE ────────────────────────────────────────────────
+function deleteSelected(){
+  const n=selectedIds.size;if(!n)return;
+  showConfirm(`確認刪除 ${n} 筆記錄？`,
+    `此操作無法復原，照片資料也會一併刪除。`,
+    async()=>{
+      for(const id of selectedIds) await delRec(getStore(),id);
+      selectedIds.clear();pendingEdits={};
+      document.getElementById('btn-save').style.display='none';
+      await loadData();toast(`已刪除 ${n} 筆`,'info');
+    });
+}
+
+// ── SORT ──────────────────────────────────────────────────
+function doSort(key){
+  if(sortCol===key) sortDir*=-1; else{sortCol=key;sortDir=1;}
+  applyFilters();
+}
+
+// ── STATUS BAR ────────────────────────────────────────────
+async function updateStatusBar(){
+  const eqs=await getAll('equip');const ins=await getAll('instr');
+  document.getElementById('sb-equip').textContent=`裝備：${eqs.length} 筆`;
+  document.getElementById('sb-instr').textContent=`儀校：${ins.length} 筆`;
+}
+
+// ── EXCEL ─────────────────────────────────────────────────
+async function exportExcel(){
+  const eqs=await getAll('equip');const ins=await getAll('instr');
+  const wb=XLSX.utils.book_new();
+  const ws1=XLSX.utils.aoa_to_sheet([
+    ['財產編號','裝備名稱','廠牌','型號','系統別','存放位置','備註','使用情況'],
+    ...eqs.map(r=>[r.assetId||'',r.name,r.brand||'',r.model||'',r.system||'',
+      r.location||'',r.note||'',r.status==='ok'?'正常':'故障'])
+  ]);
+  ws1['!cols']=[{wch:14},{wch:20},{wch:14},{wch:16},{wch:12},{wch:12},{wch:22},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws1,'裝備清單');
+  const eqMap={};eqs.forEach(e=>eqMap[e.id]=e);
+  const ws2=XLSX.utils.aoa_to_sheet([
+    ['儀校編號','儀具名稱','廠牌','型號','地點','介質','量測最小值','量測最大值','單位',
+     '備註','連結財產編號','連結裝備名稱','儀器狀態','校驗截止日','校驗週期(天)','校驗狀態'],
+    ...ins.map(r=>{
+      const eq=r.linkedEquipId?eqMap[r.linkedEquipId]:null;
+      const cs=calStatusFromDate(r.calExpiry,r.calPeriod);
+      return [r.instrId,r.name,r.brand||'',r.model||'',r.location||'',r.medium||'',
+        r.rangeMin??'',r.rangeMax??'',r.rangeUnit||'',r.note||'',
+        eq?(eq.assetId||''):'',eq?eq.name:'',
+        r.status==='ok'?'正常':'故障',r.calExpiry||'',r.calPeriod||'',CAL_LABEL[cs]||''];
+    })
+  ]);
+  ws2['!cols']=[{wch:14},{wch:18},{wch:12},{wch:14},{wch:10},{wch:8},{wch:8},{wch:8},
+    {wch:6},{wch:18},{wch:14},{wch:18},{wch:10},{wch:12},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws2,'儀校清單');
+  XLSX.writeFile(wb,`裝備後台_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('✅ 已匯出','ok');
+}
+
+async function importExcel(inp){
+  const f=inp.files[0];if(!f)return;
+  const buf=await f.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array'});
+  let na=0,nu=0,ia=0,iu=0;
+  const merge=(o,n)=>{const r={...o};for(const[k,v]of Object.entries(n))if(v!==''&&v!=null)r[k]=v;return r;};
+
+  if(wb.SheetNames.includes('裝備清單')){
+    const ex=await getAll('equip');
+    const byA={},byN={};ex.forEach(r=>{if(r.assetId)byA[r.assetId.trim()]=r;byN[r.name?.trim()]=r;});
+    for(const r of XLSX.utils.sheet_to_json(wb.Sheets['裝備清單'],{header:1}).slice(1)){
+      const [aId,name,brand,model,system,location,note,st]=r;
+      if(!name)continue;
+      const inc={assetId:aId?String(aId).trim():'',name:String(name).trim(),
+        brand:brand?String(brand):'',model:model?String(model):'',
+        system:system?String(system):'',location:location?String(location):'',
+        note:note?String(note):'',status:st==='故障'?'ng':st==='正常'?'ok':''};
+      const old=inc.assetId?byA[inc.assetId]:byN[inc.name];
+      if(old){const u=merge(old,inc);u.id=old.id;await putRec('equip',u);nu++;}
+      else{if(!inc.status)inc.status='ok';await addRec('equip',{...inc,photos:[],createdAt:new Date().toISOString()});na++;}
+    }
+  }
+  if(wb.SheetNames.includes('儀校清單')){
+    const ex=await getAll('instr');
+    const byI={};ex.forEach(r=>{if(r.instrId)byI[r.instrId.trim()]=r;});
+    for(const r of XLSX.utils.sheet_to_json(wb.Sheets['儀校清單'],{header:1}).slice(1)){
+      const [iId,name,brand,model,loc,med,rMin,rMax,rU,note,,,st,calEx,calP]=r;
+      if(!iId||!name)continue;
+      const inc={instrId:String(iId).trim(),name:String(name).trim(),
+        brand:brand?String(brand):'',model:model?String(model):'',
+        location:loc?String(loc):'',medium:med?String(med):'',
+        rangeMin:rMin!=null&&rMin!==''?Number(rMin):null,
+        rangeMax:rMax!=null&&rMax!==''?Number(rMax):null,
+        rangeUnit:rU?String(rU):'',note:note?String(note):'',
+        status:st==='故障'?'ng':st==='正常'?'ok':'',
+        calExpiry:calEx?String(calEx):'',calPeriod:calP?parseInt(calP):0};
+      const old=byI[inc.instrId];
+      if(old){
+        const u=merge(old,inc);
+        if(inc.rangeMin===null)u.rangeMin=old.rangeMin;
+        if(inc.rangeMax===null)u.rangeMax=old.rangeMax;
+        if(!inc.calPeriod)u.calPeriod=old.calPeriod;
+        u.id=old.id;await putRec('instr',u);iu++;
+      } else {
+        if(!inc.status)inc.status='ok';
+        await addRec('instr',{...inc,linkedEquipId:null,photos:[],createdAt:new Date().toISOString()});ia++;
+      }
+    }
+  }
+  inp.value='';
+  toast(`裝備 新增${na} 更新${nu}｜儀校 新增${ia} 更新${iu}`,'ok');
+  await loadData();updateStatusBar();
+}
+
+// ── CONFIRM ───────────────────────────────────────────────
+let confirmCb=null;
+function showConfirm(title,msg,cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  confirmCb=cb;
+  document.getElementById('confirmModal').classList.add('open');
+  document.getElementById('confirmOk').onclick=()=>{closeConfirm();confirmCb?.();};
+}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('open')}
+
+// ── UTILS ─────────────────────────────────────────────────
+function escH(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function escAttr(s){return String(s).replace(/"/g,'&quot;')}
+
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=`toast show ${type}`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// global listeners
+document.addEventListener('mousedown',e=>{
+  if(activeEdit&&!e.target.closest('#ae')&&e.target.id!=='ae') commitEdit();
+  if(assetPopupTarget&&!e.target.closest('#assetPopup')&&!e.target.closest('.linked')) closeAssetPopup();
+});
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveAllEdits();}
+  if(e.key==='Escape'){cancelEdit();closeNewRow();closeAssetPopup();}
+});
+
+// ── JSON EXPORT / IMPORT ──────────────────────────────────
+async function exportJSON(){
+  const eqs=await getAll('equip');const ins=await getAll('instr');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({equip:eqs,instr:ins},null,2)],{type:'application/json'}));
+  a.download=`eq_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();toast('✅ 已匯出 JSON（含照片）','ok');
+}
+
+async function importJSON(inp){
+  const f=inp.files[0];if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    const merge=(o,n)=>{const r={...o};for(const[k,v]of Object.entries(n))if(v!==''&&v!=null)r[k]=v;return r;};
+    let ne=0,nu=0,ia=0,iu=0;
+
+    if(data.equip){
+      const ex=await getAll('equip');
+      const byA={},byN={};ex.forEach(r=>{if(r.assetId)byA[r.assetId.trim()]=r;byN[r.name?.trim()]=r;});
+      for(const r of data.equip){
+        const{id,...rest}=r;
+        const old=rest.assetId?byA[rest.assetId.trim()]:byN[rest.name?.trim()];
+        if(old){const u=merge(old,rest);u.id=old.id;await putRec('equip',u);nu++;}
+        else{await addRec('equip',rest);ne++;}
+      }
+    }
+    if(data.instr){
+      const ex=await getAll('instr');
+      const byI={};ex.forEach(r=>{if(r.instrId)byI[r.instrId.trim()]=r;});
+      for(const r of data.instr){
+        const{id,...rest}=r;
+        const old=rest.instrId?byI[rest.instrId.trim()]:null;
+        if(old){const u=merge(old,rest);u.id=old.id;await putRec('instr',u);iu++;}
+        else{await addRec('instr',rest);ia++;}
+      }
+    }
+    inp.value='';
+    toast(`✅ 裝備 新增${ne} 更新${nu}｜儀校 新增${ia} 更新${iu}`,'ok');
+    await loadData();updateStatusBar();
+  }catch(e){toast('JSON 格式錯誤','err');inp.value='';}
+}
+
+// ── INIT ──────────────────────────────────────────────────
+openDB().then(()=>{setupFilters();loadData();});
+</script>
+</body>
+</html>
